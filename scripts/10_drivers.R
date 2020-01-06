@@ -1,17 +1,18 @@
 #### Woody encroachment across biomes 
-#### Script 10. Drivers
-#### Mariana Garcia
+#### Script 10. Drivers of woody cover change
+#### Mariana García Criado
 #### October 2018
 
-# Load packages
-.libPaths("C:/R_library")
+## PACKAGES ----
 library(ggplot2)
 library(dplyr)
 
+## DATA PREP ----
+
 # loading driver data
-driv.tundra <- read.csv("scripts/users/mgarciacriado/encroachment_paper/drivers_analysis/databases/drivers_updated/drivers_tundra_all_trends.csv")
-driv.savanna <- read.csv("scripts/users/mgarciacriado/encroachment_paper/drivers_analysis/databases/drivers_updated/drivers_savanna_all_trends.csv")
-driv.itex <- read.csv("scripts/users/mgarciacriado/encroachment_paper/drivers_analysis/databases/drivers_updated/drivers_itex_all_trends.csv")
+driv.tundra <- read.csv("mastersheets/drivers_tundra_all_trends.csv")
+driv.savanna <- read.csv("mastersheets/drivers_savanna_all_trends.csv")
+driv.itex <- read.csv("mastersheets/drivers_itex_all_trends.csv")
 
 # Combining biome databases
 driv.tundra.s <- driv.tundra %>% dplyr::select(Biome_type, Latitude, Longitude, Annual.rate, Drivers) %>% na.omit()
@@ -33,7 +34,6 @@ drivers.all$Biome_trend[drivers.all$Biome_type == "Tundra" & drivers.all$Trend =
 drivers.all$Biome_trend[drivers.all$Biome_type == "Tundra" & drivers.all$Trend == "Increase"] <- "Tundra_increase"
 drivers.all$Biome_trend[drivers.all$Biome_type == "Tundra" & drivers.all$Trend == "Stable"] <- "Tundra_stable"
 
-
 # Tidying up and ordering the driver data
 drivers.all.group <- drivers.all %>%
   dplyr::group_by(Biome_trend, Drivers) %>% 
@@ -43,7 +43,7 @@ drivers.all.group.total <- drivers.all.group %>% group_by(Drivers) %>% summarise
 drivers.final <- merge(drivers.all.group, drivers.all.group.total, by = "Drivers")
 
 
-# Plotting the drivers (Figure 6)
+## FIGURE 6 ----
 (drivers.plot <- ggplot(drivers.final, aes(x = reorder(Drivers, -total), y = n, fill = Biome_trend)) +
     geom_bar(stat = "identity", position = "stack") + ylab("Number of records\n") + xlab("\nDrivers") + 
     scale_fill_manual(values = c("indianred2", "steelblue1", "gray56", "darkred", "darkblue", "gray28"), 
@@ -62,8 +62,5 @@ drivers.final <- merge(drivers.all.group, drivers.all.group.total, by = "Drivers
           panel.background = element_blank(), axis.line = element_line(colour = "black"), 
           plot.margin = unit(c(1,1,1,1), units = , "cm")))
 
-ggsave(drivers.plot, filename = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/figures/Figure_6.png", 
+ggsave(drivers.plot, filename = "figures/Figure_6.png", 
        width = 47, height = 25, units = "cm")
-
-
-
