@@ -1,11 +1,9 @@
 #### Woody encroachment across biomes 
-#### Script 4. Climatic space with climatologies
-#### Mariana Garcia
+#### Script 04. Climatic space with climatologies
+#### Mariana García Criado
 #### February 2018
 
-# Load packages ----
-.libPaths("C:/R_library")
-
+## LIBRARIES ----
 library(dplyr)
 library(raster)
 library(rgdal)
@@ -15,26 +13,31 @@ library(ggplot2)
 library(MCMCglmm)
 library(cowplot)
 
-## CHELSA extraction (this can be skipped, only to be done once) ----
+## CHELSA EXTRACTION ----
+# The climatic raster files are heavy and are thus not stored online.
+# In order to continue reproducing this code, please either: 
+# a) download the climatic data from http://chelsa-climate.org/ or 
+# b) skip the code until line 39, where the climatic data has already been extracted
+# The code is left commented so it is clear it should only be run once.
 
 # CHELSA climatologies (mean value for the whole period 1979 - 2013)
 #temp <- raster("S:/Climate_Data/Chelsa/CHELSA_bio10_1.tif")
 #rainfall <- raster("S:/Climate_Data/Chelsa/CHELSA_bio10_12.tif")
 
 ## Loading plant cover data
-#cover.ms.clim <- read.csv("scripts/users/mgarciacriado/encroachment_paper/final_scripts/mastersheets/cover_ms_clean.csv")
+#cover.ms.clim <- read.csv("mastersheets/cover_ms_clean.csv")
 
-## Extracting rainfall and temperature climatologies from CHELSA
+## Extracting rainfall and temperature climatologies from CHELSA 
 #cover.ms.clim$tempc <- raster::extract(temp, cbind(cover.ms.clim$Longitude, cover.ms.clim$Latitude))
 #cover.ms.clim$tempc <- cover.ms.clim$tempc/10
 
 #cover.ms.clim$precip <- raster::extract(rainfall, cbind(cover.ms.clim$Longitude, cover.ms.clim$Latitude))
 
-#write.csv(cover.ms.clim, "scripts/users/mgarciacriado/encroachment_paper/final_scripts/mastersheets/cover_ms_clim.csv")
+#write.csv(cover.ms.clim, "mastersheets/cover_ms_clim.csv")
 
 
-# Climatic space graph ----
-cover.ms.clim <- read.csv("scripts/users/mgarciacriado/encroachment_paper/final_scripts/mastersheets/cover_ms_clim.csv")
+## CLIMATE SPACE (FIGURE 2) ----
+cover.ms.clim <- read.csv("mastersheets/cover_ms_clim.csv")
 cover.ms.clim$Absolute_change <- abs(cover.ms.clim$Annual.rate)
 
 (clim_space <- ggplot(cover.ms.clim, aes(x=tempc, y=precip, colour=Biome_trend)) + 
@@ -61,8 +64,7 @@ cover.ms.clim$Absolute_change <- abs(cover.ms.clim$Annual.rate)
           plot.margin = unit(c(1,1,1,1), units = , "cm")))
 
 
-## Marginal plots ----
-# Mean Annual Temperature plot with labels for each biome
+## MAT marginal plot
 avg_mat <- plyr::ddply(cover.ms.clim, "Biome_type", summarise, grop.mean=mean(tempc))
 
 (clim.mat <- ggplot(cover.ms.clim, aes(x = tempc, fill = Biome_type)) + geom_density(alpha = 0.6) + 
@@ -101,31 +103,28 @@ avg_map <- plyr::ddply(cover.ms.clim, "Biome_type", summarise, grop.mean=mean(pr
           plot.margin = unit(c(1,1,1,1), units = , "cm")))
 
 
-# Arrange marginal plots around the climatic space plot with cowplot (Figure 2)
+# Arrange marginal plots around the climatic space plot (Figure 2)
 C1 <- insert_xaxis_grob(clim_space, clim.mat, grid::unit(1, "in"), position = "top")
 C2 <- insert_yaxis_grob(C1, clim.map, grid::unit(1, "in"), position = "right")
 ggdraw(C2)
-ggplot2::ggsave(C2, filename = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/figures/Figure_2.png", 
+ggplot2::ggsave(C2, filename = "figures/Figure_2.png", 
                 width = 50, height = 25, units = "cm")
 
 
-## Climatology models ----
+## CLIMATOLOGY MODELS ----
 
 # Include geographical grids according to coordinates - every 10 degrees of latitude and longitude
 cover.ms.clim <- cover.ms.clim %>% mutate(lat_cat = floor(Latitude), long_cat = floor(Longitude))
 cover.ms.clim$lat_cat <- plyr::round_any(cover.ms.clim$lat_cat, 10, f = floor)
 cover.ms.clim$long_cat <- plyr::round_any(cover.ms.clim$long_cat, 10, f = floor)
 cover.ms.clim <- cover.ms.clim %>% mutate(geo.coords = paste("_", lat_cat, "_", long_cat, "_"))
-write.csv(cover.ms.clim, "scripts/users/mgarciacriado/encroachment_paper/final_scripts/mastersheets/cover_ms_clim_coord.csv")
+write.csv(cover.ms.clim, "mastersheets/cover_ms_clim_coord.csv")
 
 tun.clim <- filter(cover.ms.clim, Biome_type == "Tundra")
 sav.clim <- filter(cover.ms.clim, Biome_type == "Savanna")
 
-## Fitting the model with grid cells as random factor and interaction between climatic factors as fixed effects
 
-
-
-#### TUNDRA CLIMATOLOGY MODEL ----
+## Tundra climatology model
 tun.clim.mod <- MCMCglmm(Annual.rate ~ tempc + precip + tempc*precip, data = tun.clim, 
                          random = ~us(1):geo.coords, nitt = 100000, burnin = 5000, thin = 30)
 
@@ -135,10 +134,10 @@ plot(tun.clim.mod$VCV)
 autocorr.plot(tun.clim.mod$VCV)
 hist(mcmc(tun.clim.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
 # Positive slope with temperature but not significant, negative for precip and interaction (non-significant)
-save(tun.clim.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/tun.clim.mod.RData")
+save(tun.clim.mod, file = "models/random/tun.clim.mod.RData")
 
 
-# Manual predictions
+# Tundra manual predictions
 preddata <- expand.grid(tempc = seq(from=min(tun.clim$tempc), 
                                     to = max(tun.clim$tempc), by = 1), 
                         precip = c(quantile(tun.clim$precip,0.10), mean(tun.clim$precip),
@@ -149,7 +148,7 @@ preddata <- expand.grid(tempc = seq(from=min(tun.clim$tempc),
 predclim.tun <- predict.MCMCglmm(tun.clim.mod, newdata = preddata, interval = "confidence", type = "terms")
 pred.raw.clim.tun <- cbind(data.frame(predclim.tun), preddata)
 
-# plot predictions
+# Plot predictions
 (pred.clim.tun.plot <- ggplot()+
     geom_point(data = tun.clim, aes(x = tempc, y= Annual.rate), size = 2) +
     geom_line(data = pred.raw.clim.tun, aes(x = tempc, y = fit, colour = factor(precip)), size=2) + 
@@ -160,7 +159,7 @@ pred.raw.clim.tun <- cbind(data.frame(predclim.tun), preddata)
 
 
 
-#### SAVANNA CLIMATOLOGY MODEL ----
+## Savanna climatology model
 sav.clim.mod <- MCMCglmm(Annual.rate ~ tempc + precip + tempc*precip, data = sav.clim, 
                          random = ~us(1):geo.coords, nitt = 100000, burnin = 5000, thin = 30)
 
@@ -169,8 +168,8 @@ plot(sav.clim.mod$Sol, auto.layout = F)
 plot(sav.clim.mod$VCV)
 autocorr.plot(sav.clim.mod$VCV)
 hist(mcmc(sav.clim.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-# positive interaction between temp x precip, but negative slopes for both temp and precip (non-significant)
-save(sav.clim.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/sav.clim.mod.RData")
+# positive ns interaction between temp x precip, negative slopes for both temp and precip (non-significant)
+save(sav.clim.mod, file = "models/random/sav.clim.mod.RData")
 
 
 # Savanna manual predictions
@@ -185,19 +184,20 @@ preddata2 <- expand.grid(precip = seq(from=min(sav.clim$precip),
 predclim.sav <- predict.MCMCglmm(sav.clim.mod, newdata = preddata2, interval = "confidence", type = "terms")
 pred.raw.clim.sav <- cbind(data.frame(predclim.sav), preddata2)
 
-# plot predictions
+
+# Plot predictions
 (pred.clim.sav.plot <- ggplot()+
     geom_point(data = sav.clim, aes(x = precip, y= Annual.rate), size = 2) +
     geom_line(data = pred.raw.clim.sav, aes(x = precip, y = fit, colour = factor(tempc)), size=2) + 
     geom_ribbon(data = pred.raw.clim.sav, aes(x = precip, ymin = lwr, ymax = upr, fill = factor(tempc)), 
                 alpha = 0.32, linetype = 0) +
     theme_bw())
-# No difference here 
+# No difference here between gradients
 
 
-#### ADDITIONAL PLOTS SUGGESTED BY REVIEWER#1 ----
+## FIGURE S4 ----
 
-## MAT vs. cover change
+# MAT vs. cover change
 (clim.mat.plot <- ggplot(cover.ms.clim, aes(x=tempc, y=Annual.rate, colour=Biome_type)) + 
     geom_point(size = 5, alpha = 0.5) + 
     geom_vline(xintercept = 0) + geom_hline(yintercept = 0) + 
@@ -212,7 +212,7 @@ pred.raw.clim.sav <- cbind(data.frame(predclim.sav), preddata2)
           legend.title = element_text(face = "bold", size=25), legend.text = element_text(size=22), 
           legend.key = element_blank(), plot.margin = unit(c(1,1,1,1), units = , "cm")))
 
-## MAP vs. cover change
+# MAP vs. cover change
 (clim.map.plot <- ggplot(cover.ms.clim, aes(x=precip, y=Annual.rate, colour=Biome_type)) + 
     geom_point(size = 5, alpha = 0.5) + 
     geom_vline(xintercept = 0) + geom_hline(yintercept = 0) + 
@@ -227,16 +227,16 @@ pred.raw.clim.sav <- cbind(data.frame(predclim.sav), preddata2)
           legend.title = element_text(face = "bold", size=25), legend.text = element_text(size=22), 
           legend.key = element_blank(), plot.margin = unit(c(1,1,1,1), units = , "cm")))
 
-## Panel
+## Figure panel
 (clim.panel <- ggpubr::ggarrange(clim.mat.plot, clim.map.plot, labels = c("(a)", "(b)"),
                                   font.label = list(size = 26), ncol =2, nrow = 1, 
                                  common.legend = TRUE, legend = "top"))
-ggplot2::ggsave(clim.panel, filename = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/figures/Figure_S3_new.png", 
+ggplot2::ggsave(clim.panel, filename = "figures/Figure_S4.png", 
                 width = 50, height = 25, units = "cm")
 
 
 
-#### HIGH VS LOW RAINFALL SAVANNAS ----
+## HIGH VS LOW RAINFALL SAVANNAS ----
 high.rainfall <- filter(sav.clim, precip > 650) 
 #316 sites out of 776, that's 40%
 
@@ -246,11 +246,12 @@ low.rainfall <- filter(sav.clim, precip < 650)
 mean.high <- high.rainfall %>% summarise(mean(Annual.rate)) #0.4186774
 mean.low <- low.rainfall %>% summarise(mean(Annual.rate)) #0.25
 
-# Are WPE rates higher in high vs. low rainfall savannas?
+# Are cover change rates higher in high vs. low rainfall savannas?
 sav.clim$low_high[sav.clim$precip <= 650] <- "low"
 sav.clim$low_high[sav.clim$precip > 650] <- "high"
 
 sav.rainfall <- MCMCglmm(Annual.rate ~ low_high, data = sav.clim, 
                           nitt = 100000, burnin = 5000, thin = 30)
-summary(sav.rainfall) #non-significant, but lower rates in low-rainfall 
-save(sav.rainfall, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/fixed/sav.rainfall.RData")
+summary(sav.rainfall) #almost significant lower cover change rates in low-rainfall savannas
+save(sav.rainfall, file = "models/fixed/sav.rainfall.RData")
+
