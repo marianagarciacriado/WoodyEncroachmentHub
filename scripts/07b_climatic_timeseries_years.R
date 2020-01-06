@@ -1,5 +1,5 @@
 #### Woody encroachment across biomes
-#### Script 07b. Climatic timeseries models & figures - 
+#### Script 07b. Climatic timeseries models & figures
 #### 'Rate vs rate' analysis excluding sites from before 1979 and after 2013
 #### Mariana García Criado
 #### September 2019
@@ -46,6 +46,10 @@ map_min_y <- filter(clima.years.2013, variable == 'map_min')
 map_max_y <- filter(clima.years.2013, variable == 'map_max')
 
 
+# parameter-expanded prior with inverse Wishart distribution
+a <- 1000
+prior6 <- list(R = list(V = diag(1), nu = 0.002),
+               G = list(G1 = list(V = diag(1), nu = 1, alpha.mu = 0, alpha.V = diag(1)*a)))
 
 ## MODELS WITHOUT RECORDS <1979 & >2013 ----
 
@@ -387,7 +391,7 @@ mcmcOutputs.estimate.y.prec <- mcmcOutputs.estimate.y %>% filter(modelName %in% 
 mcmcOutputs.estimate.y.prec$clim.var <- c("Jan-Feb", "Jan-Feb", "Jun-Jul", "Jun-Jul", "Max", "Max", "Min", "Min", "MAP", "MAP")
 
 
-## PLOTS ---
+## PLOTS ----
 
 ## plotting temperature effect sizes
 (effect.sizes.temp.y <- ggplot(mcmcOutputs.estimate.y.temp, aes(x = factor(clim.var), y = post.mean, fill = factor(Biome))) + 
