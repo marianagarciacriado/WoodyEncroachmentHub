@@ -1,29 +1,24 @@
 #### Woody encroachment across biomes
-#### Script 6. CHELSA climatic data manipulation
-#### Mariana Garcia 
+#### Script 06. CHELSA climatic data preparation
+#### Mariana García Criado
 #### November 2018
 
-## Libraries ----
-#.libPaths("C:/R_library")
-
+## LIBRARIES ----
 library(raster)
 library(rgdal)
 library(rasterVis)
 library(sp)
-library(tidyr)
+library(tidyr) # load tidyr before dplyr
 library(readr)
 library(dplyr)
 library(broom)
 
-## NB. This script can be skipped (until line 327) when running all scripts sequentially, since it requires access to the downloaded
-## climatologies and time series from CHELSA (http://chelsa-climate.org/) which are stored in a hard drive
-## Contact Mariana in case you need direct access to this (mariana.garcia.criado@ed.ac.uk) 
-## For the actual analysis, see next Rscript named '7_climatic_timeseries'.
+## NB. This script can be skipped (until line 333) when running all scripts sequentially, since it requires access to the downloaded
+## climatologies and time series raster files from CHELSA which are not stored online due to their large sizes.
+## The original climate data can be downloaded directly from the CHELSA website (http://chelsa-climate.org/)
 
 
-#### Climatic data extraction ----
-
-## Extracting MAT data per site ----
+## MAT DATA EXTRACTION ----
 
 # defining the filepath
 folderpath_mat <- "D:/chelsa_mat"
@@ -31,9 +26,9 @@ filenames_mat <- list.files(folderpath_mat, pattern = "*.tif")
 filepath_mat = paste0(folderpath_mat, "/", filenames_mat)
 
 # loading the mastersheet that contains the coordinates
-mastersheet <- read.csv("scripts/users/mgarciacriado/encroachment_paper/final_scripts/mastersheets/cover_ms_clim_coord.csv")
+mastersheet <- read.csv("mastersheets/cover_ms_clim_coord.csv")
 
-#  extract the coordinates as a spatial points object 
+# extract the coordinates as a spatial points object 
 latlong <- mastersheet %>% dplyr::select(Longitude, Latitude) %>% drop_na() %>% distinct() %>% SpatialPoints()
 
 # create raster stack
@@ -62,10 +57,10 @@ master_mat <- dplyr::select(master_mat, -CHELSA)
 master_mat$value <- master_mat$value/10 - 273.15
 
 # save dataframe as a file
-write.csv(master_mat, "scripts/users/mgarciacriado/encroachment_paper/climatic_timeseries/data/master_mat.csv")
+write.csv(master_mat, "data/master_mat.csv")
 
 
-## Extracting MAP data per site ----
+## MAP DATA EXTRACTION ----
 
 # define file paths for MAP
 folderpath_map <- "D:/chelsa_precip/precip_annual"
@@ -87,10 +82,10 @@ master_map <- master_map %>% separate(var_year, c("CHELSA", "variable", "year"))
 master_map <- dplyr::select(master_map, -CHELSA)
 
 # save dataframe as a file
-write.csv(master_map, "scripts/users/mgarciacriado/encroachment_paper/climatic_timeseries/data/master_map.csv")
+write.csv(master_map, "data/master_map.csv")
 
 
-## Extracting MAT - Jan&Feb data per site ----
+## JAN&FEB MAT DATA EXTRACTION ----
 
 # define file paths
 folderpath_mat_janfeb <- "D:/chelsa_mat_janfeb"
@@ -116,10 +111,10 @@ master_mat_janfeb <- dplyr::select(master_mat_janfeb, -CHELSA, -months)
 master_mat_janfeb$value <- master_mat_janfeb$value/10 - 273.15
 
 # save dataframe as a file
-write.csv(master_mat_janfeb, "scripts/users/mgarciacriado/encroachment_paper/climatic_timeseries/data/master_mat_janfeb.csv")
+write.csv(master_mat_janfeb, "data/master_mat_janfeb.csv")
 
 
-## Extracting MAT - Jun&Jul data per site ----
+## JUNE&JULY MAT EXTRACTION ----
 
 # define file paths
 folderpath_mat_junjul <- "D:/chelsa_mat_junjul"
@@ -145,10 +140,10 @@ master_mat_junjul <- dplyr::select(master_mat_junjul, -CHELSA, -months)
 master_mat_junjul$value <- master_mat_junjul$value/10 - 273.15
 
 # save dataframe as a file
-write.csv(master_mat_junjul, "scripts/users/mgarciacriado/encroachment_paper/climatic_timeseries/data/master_mat_junjul.csv")
+write.csv(master_mat_junjul, "data/master_mat_junjul.csv")
 
 
-## Extracting MAP - Jan&Feb data per site ----
+## JAN&FEB MAP DATA EXTRACTION ----
 
 # define file paths
 folderpath_map_janfeb <- "D:/chelsa_map_janfeb"
@@ -171,10 +166,10 @@ master_map_janfeb$variable <- paste0(master_map_janfeb$variable, "_", master_map
 master_map_janfeb <- dplyr::select(master_map_janfeb, -CHELSA, -months)
 
 # save dataframe as a file
-write.csv(master_map_janfeb, "scripts/users/mgarciacriado/encroachment_paper/climatic_timeseries/data/master_map_janfeb.csv")
+write.csv(master_map_janfeb, "data/master_map_janfeb.csv")
 
 
-## Extracting MAP - Jun&Jul data per site ----
+## JUNE&JULY MAP DATA EXTRACTION ----
 
 # define file paths
 folderpath_map_junjul <- "D:/chelsa_map_junjul"
@@ -197,11 +192,11 @@ master_map_junjul$variable <- paste0(master_map_junjul$variable, "_", master_map
 master_map_junjul <- dplyr::select(master_map_junjul, -CHELSA, -months)
 
 # save dataframe as a file
-write.csv(master_map_junjul, "scripts/users/mgarciacriado/encroachment_paper/climatic_timeseries/data/master_map_junjul.csv")
+write.csv(master_map_junjul, "data/master_map_junjul.csv")
 
 
 
-## Extracting MAT - Minimum Temperature per site ----
+## MINIMUM TEMP DATA EXTRACTION ----
 
 # defining the filepath
 folderpath_mat_minmax <- "D:/chelsa_tmean"
@@ -224,10 +219,10 @@ master_mat_minmax <- master_mat_minmax %>% gather(key = "var_year", value = "val
 # convert to celsius from kelvin
 master_mat_minmax$value <- master_mat_minmax$value/10 - 273.15
 
-write.csv(master_mat_minmax, "scripts/users/mgarciacriado/encroachment_paper/climatic_timeseries/data/master_mat_minmax.csv")
+write.csv(master_mat_minmax, "data/master_mat_minmax.csv")
 
 # identify the month with the lowest temperature for each site and year
-master_mat_minmax <- read.csv("scripts/users/mgarciacriado/encroachment_paper/climatic_timeseries/data/master_mat_minmax.csv")
+master_mat_minmax <- read.csv("data/master_mat_minmax.csv")
 
 master_mat_min <- master_mat_minmax %>% group_by(ID, Longitude, Latitude, year) %>% summarise(mintemp = min(value)) %>% ungroup()
 #master_mat_min_merge <- semi_join(master_mat_min, master_mat_minmax)
@@ -238,10 +233,10 @@ colnames(master_mat_min)[colnames(master_mat_min)=="mintemp"] <- "value"
 master_mat_min <- master_mat_min[c("ID", "Longitude", "Latitude", "variable", "year", "value")]
 
 # save dataframe as a file
-write.csv(master_mat_min, "scripts/users/mgarciacriado/encroachment_paper/climatic_timeseries/data/master_mat_min.csv")
+write.csv(master_mat_min, "data/master_mat_min.csv")
 
 
-## Extracting MAT - Maximum Temperature per site ----
+## MAXIMUM TEMP DATA EXTRACTION ----
 master_mat_minmax
 
 # identify the month with the highest temperature for each site and year
@@ -254,10 +249,10 @@ colnames(master_mat_max)[colnames(master_mat_max)=="maxtemp"] <- "value"
 master_mat_max <- master_mat_max[c("ID", "Longitude", "Latitude", "variable", "year", "value")]
 
 # save dataframe as a file
-write.csv(master_mat_max, "scripts/users/mgarciacriado/encroachment_paper/climatic_timeseries/data/master_mat_max.csv")
+write.csv(master_mat_max, "data/master_mat_max.csv")
 
 
-## Extracting MAP - Maximum Precipitation per site ----
+## MAXIMUM PRECIP DATA EXTRACTION ----
 
 # defining the filepath
 folderpath_map_minmax <- "D:/chelsa_precip/precip_timeseries"
@@ -288,10 +283,10 @@ colnames(master_map_max)[colnames(master_map_max)=="maxprec"] <- "value"
 master_map_max <- master_map_max[c("ID", "Longitude", "Latitude", "variable", "year", "value")]
 
 # save dataframe as a file
-write.csv(master_map_max, "scripts/users/mgarciacriado/encroachment_paper/climatic_timeseries/data/master_map_max.csv")
+write.csv(master_map_max, "data/master_map_max.csv")
 
 
-## Extracting MAP - Minimum Precipitation per site ----
+## MINIMUM PRECIP DATA EXTRACTION ----
 
 # identify the month with the lowest precipitation for each site and year
 master_map_min <- master_map_minmax %>% group_by(ID, Longitude, Latitude, year) %>% summarise(minprec = min(value)) %>% ungroup()
@@ -303,41 +298,41 @@ colnames(master_map_min)[colnames(master_map_min)=="minprec"] <- "value"
 master_map_min <- master_map_min[c("ID", "Longitude", "Latitude", "variable", "year", "value")]
 
 # save dataframe as a file
-write.csv(master_map_min, "scripts/users/mgarciacriado/encroachment_paper/climatic_timeseries/data/master_map_min.csv")
+write.csv(master_map_min, "data/master_map_min.csv")
 
 
 
-## Combine the various dataframes into a main one ----
-master_map <- read.csv("scripts/users/mgarciacriado/encroachment_paper/climatic_timeseries/data/master_map.csv")
-master_mat <- read.csv("scripts/users/mgarciacriado/encroachment_paper/climatic_timeseries/data/master_mat.csv")
-master_mat_janfeb <- read.csv("scripts/users/mgarciacriado/encroachment_paper/climatic_timeseries/data/master_mat_janfeb.csv")
-master_mat_junjul <- read.csv("scripts/users/mgarciacriado/encroachment_paper/climatic_timeseries/data/master_mat_junjul.csv")
-master_map_janfeb <- read.csv("scripts/users/mgarciacriado/encroachment_paper/climatic_timeseries/data/master_map_janfeb.csv")
-master_map_junjul <- read.csv("scripts/users/mgarciacriado/encroachment_paper/climatic_timeseries/data/master_map_junjul.csv")
-master_mat_min <- read.csv("scripts/users/mgarciacriado/encroachment_paper/climatic_timeseries/data/master_mat_min.csv")
-master_mat_max <- read.csv("scripts/users/mgarciacriado/encroachment_paper/climatic_timeseries/data/master_mat_max.csv")
-master_map_max <- read.csv("scripts/users/mgarciacriado/encroachment_paper/climatic_timeseries/data/master_map_max.csv")
-master_map_min <- read.csv("scripts/users/mgarciacriado/encroachment_paper/climatic_timeseries/data/master_map_min.csv")
+## DATAFRAME COMBINATION ----
+master_map <- read.csv("data/master_map.csv")
+master_mat <- read.csv("data/master_mat.csv")
+master_mat_janfeb <- read.csv("data/master_mat_janfeb.csv")
+master_mat_junjul <- read.csv("data/master_mat_junjul.csv")
+master_map_janfeb <- read.csv("data/master_map_janfeb.csv")
+master_map_junjul <- read.csv("data/master_map_junjul.csv")
+master_mat_min <- read.csv("data/master_mat_min.csv")
+master_mat_max <- read.csv("data/master_mat_max.csv")
+master_map_max <- read.csv("data/master_map_max.csv")
+master_map_min <- read.csv("data/master_map_min.csv")
 
 master_clima <- rbind(master_map, master_mat, master_mat_janfeb, master_mat_junjul, master_map_janfeb, 
                       master_map_junjul, master_mat_min, master_mat_max, master_map_max, master_map_min)
 
 
-
-#### Site-Specific Timeseries (SST) dataframe ----
+## Site-Specific Timeseries (SST) dataframe
 # adding 4 years prior the start date to account for time lags
 mastersheet.seq <- mastersheet %>% group_by(Plot.ID) %>% 
   mutate(year.b4 = min(Start_year) - 4) %>% mutate(year = list(seq(year.b4, End_year))) %>% unnest()
 
-write.csv(mastersheet.seq, "scripts/users/mgarciacriado/encroachment_paper/mastersheets/mastersheet_seq.csv")
+write.csv(mastersheet.seq, "mastersheets/mastersheet_seq.csv")
 
 # merge mastersheet.seq with master_clima
 clima.fit <- merge(mastersheet.seq, master_clima, by = c("Longitude", "Latitude", "year"))
-write.csv(clima.fit, "scripts/users/mgarciacriado/encroachment_paper/mastersheets/clima_fit.csv")
+write.csv(clima.fit, "mastersheets/clima_fit.csv")
 
-clima.fit <- read.csv("scripts/users/mgarciacriado/encroachment_paper/mastersheets/clima_fit.csv")
 
-## extracting slopes (annual change in climatic variables) for each record 
+## Extracting slopes (annual change in climatic variables) for each record 
+clima.fit <- read.csv("mastersheets/clima_fit.csv")
+
 sst.fit.slopes <- clima.fit %>%
   group_by(., variable, Plot.ID) %>%
   do(mod = lm(value ~ year, data = .)) %>%
@@ -345,9 +340,9 @@ sst.fit.slopes <- clima.fit %>%
   filter(term == "year") %>%
   dplyr::select(variable, Plot.ID, estimate)
 
-# merge the slopes with the vegetation/trend data in one final object
+# Merge the slopes with the vegetation/trend data in one final object
 clima.fit.sst <- clima.fit %>% dplyr::select(Biome_type, Plot.ID, Latitude, Longitude, tempc, precip, 
                                              variable, Annual.rate, Trend, Biome_trend, geo.coords)
 clima.fit.sst.full <- inner_join(clima.fit.sst, sst.fit.slopes, by = c("Plot.ID" = "Plot.ID", "variable" = "variable"))
 clima.fit.sst.final <- distinct(clima.fit.sst.full)
-write.csv(clima.fit.sst.final, "scripts/users/mgarciacriado/encroachment_paper/final_scripts/mastersheets/clima_fit_sst.csv")
+write.csv(clima.fit.sst.final, "mastersheets/clima_fit_sst.csv")

@@ -11,8 +11,7 @@ library(sp)
 
 ## NB. This script can be skipped when running all scripts sequentially, since it requires access to the downloaded
 ## climatologies and time series raster files from CHELSA which are not stored online due to their large sizes.
-## Thse data can be downloaded directly from the CHELSA website (http://chelsa-climate.org/)
-## For the actual climatic analysis, see script named '07_climatic_timeseries'.
+## These data can be downloaded directly from the CHELSA website (http://chelsa-climate.org/)
 
 ## Mean Annual Temperature (MAT) ----
 
