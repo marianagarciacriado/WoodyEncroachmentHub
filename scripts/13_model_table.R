@@ -1,10 +1,9 @@
 #### Woody encroachment across biomes 
-#### Script 12. Summary table - model outputs
-#### Mariana Garcia
+#### Script 13. Summary table - model outputs
+#### Mariana García Criado
 #### April 2019
 
-## Libraries ----
-.libPaths("C:/R_library")
+## LIBRARIES ----
 library(tidyverse)
 library(broom)
 library(MCMCglmm)
@@ -18,7 +17,8 @@ library(stargazer)
 ## NB2. Something's up with the magnitude vs magnitude models, which don't appear correctly in this model table when I updated them.
 ## I have fitted them separately in a table in script 11.
 
-## Defining functions ----
+
+## FUNCTIONS ----
 
 # Definining function to extract model outputs with random effects
 clean.MCMC <- function(x) {
@@ -64,7 +64,8 @@ clean.MCMC.2 <- function(x) {
 
 
 
-## Models with random effects ----
+## MODELS WITH RANDOM EFFECTS ----
+
 # Create list of input models with random effects
 dataList <- list(tun.clim.mod, sav.clim.mod, mat.tun.mod, mat.sav.mod, 
                  mat.junjul.tun.mod, mat.junjul.sav.mod, mat.janfeb.tun.mod, mat.janfeb.sav.mod, 
@@ -91,7 +92,6 @@ dataListNames <- list("Climatology interaction Tundra", "Climatology interaction
                       "Precip x MAT change Tundra", "Precip x MAT change Savanna", "Temperature x MAP change Tundra", "Temperature x MAP change Savanna", 
                       "Precip x MAP change Savanna", "Precip x MAP change Tundra", "Temperature x MAT change Savanna", "Temperature x MAT change Tundra")
 
-
 # Get model outputs and add model names
 readyList <- mapply(cbind, lapply(dataList, clean.MCMC), "modelName" = dataListNames, SIMPLIFY = F)
 
@@ -100,7 +100,7 @@ mcmc.outputs.random <- as.data.frame(do.call(rbind, readyList), stringsAsFactors
 
 
 
-## Models without random effects ----
+## MODELS WITHOUT RANDOM EFFECTS ----
 
 # Create list of input models with no random effects
 dataList2 <- list(inc.means.mod, stab.means.mod, dec.means.mod, overall.mod, 
@@ -135,11 +135,11 @@ mcmc.outputs.all.final <- transform(mcmc.outputs.all, ModelNumber = as.numeric(i
 mcmc.outputs.all.final.real <- mcmc.outputs.all.final[, c(9, 8, 1, 7, 2, 3, 4, 5, 6)]
 
 # Write csv
-write.csv(mcmc.outputs.all.final.real, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/Table_S2.csv")
+write.csv(mcmc.outputs.all.final.real, file = "models/Table_S2.csv")
 
 # Create nice table in html
 stargazer(mcmc.outputs.all.final.real, title = "Summary of all models", type = "html", summary = FALSE, 
-          out = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/figures/Table_S2.htm")
+          out = "models/Table_S2.htm")
 
 # Make it usable in Word 
 # Copy the html code that appears on the console, click on File/New/R HTML file

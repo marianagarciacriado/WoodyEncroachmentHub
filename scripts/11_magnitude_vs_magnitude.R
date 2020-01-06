@@ -179,3 +179,21 @@ save(map.sav.mag.mod, file = "models/random/map_sav_mag_mod.RData")
 ggsave(mag.panel, filename = "figures/Figure_4.png", 
        width = 40, height = 70, units = "cm")
 
+
+## SUMMARY TABLE ----
+dataListMag <- list(mat.tun.mag.mod, mat.sav.mag.mod, 
+                    map.tun.mag.mod, map.sav.mag.mod)
+
+# Create lists of input model names
+dataListNamesMag <- list("Magnitude vs magnitude MAT Tundra", "Magnitude vs magnitude MAT Savanna",
+                         "Magnitude vs magnitude MAP Tundra", "Magnitude vs magnitude MAP Savanna")
+
+# Get model outputs and add model names
+readyListMag <- mapply(cbind, lapply(dataListMag, clean.MCMC), "modelName" = dataListNamesMag, SIMPLIFY = F)
+
+# Turn list of dataframes into a dataframe
+mcmc.outputs.mag <- as.data.frame(do.call(rbind, readyListMag), stringsAsFactors = FALSE)
+
+# Convert to html
+stargazer(mcmc.outputs.mag, title = "Magnitude vs magnitude models", type = "html", summary = FALSE, 
+          out = "figures/magnitude_mods.htm")
