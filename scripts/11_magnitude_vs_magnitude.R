@@ -1,5 +1,5 @@
 #### Woody encroachment across biomes 
-#### Script 11. Sensitivity analysis
+#### Script 11. 'Magnitude vs magnitude' analysis
 #### Mariana García Criado
 #### November 2019
 
@@ -130,7 +130,7 @@ save(mat.sav.mag.mod, file = "models/random/mat_sav_mag_mod.RData")
 
 
 
-#### PRECIPITATION INCREASES ----
+## PRECIPITATION INCREASES ----
 
 # Tundra model
 map.tun.inc.mag <- filter(map.tun.mag, climdif > 0)
