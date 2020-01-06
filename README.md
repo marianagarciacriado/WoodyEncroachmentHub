@@ -36,4 +36,5 @@ Full model outputs for statistical analyses are stored in the models folder.
 ## Software requirements
 R version 3.4.3 or greater.
 
-R packages: MCMCglmm, ggplot2, plyr, gridExtra, dplyr, tidyr, stargazer, cowplot, broom, tidyverse, ggbpubr, maps, mapdata, mapproj, proj4, scales, ggalt, raster, rgdal, rasterVis, sp, readr, grid, MCMCvis
+R packages: tidyverse, proj4, scales, ggalt, ggplot2, dplyr, cowplot, MCMCglmm, ggbpubr, raster, rgdal, rasterVis, sp, tidyr, readr,  broom, stargazer
+
