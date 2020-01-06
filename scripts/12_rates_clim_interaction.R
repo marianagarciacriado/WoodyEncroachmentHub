@@ -1,16 +1,15 @@
 #### Woody encroachment across biomes 
-#### Script 13. Gradient analyses (dry vs wet sites, hot vs cool sites)
-#### Mariana Garcia
+#### Script 12. Rate vs rate with climatology interaction
+#### Mariana García Criado
 #### April 2019
 
-## Libraries
-.libPaths("C:/R_library")
+## LIBRARIES ----
 library(ggplot2)
 library(dplyr)
 library(MCMCglmm)
 library(ggpubr)
 
-## Setting the theme ----
+## THEME ----
 clima.mod.theme <- theme(legend.position = "right", legend.title = element_text(size=26), 
                      legend.text = element_text(size=26), legend.key = element_blank(), 
                      legend.spacing.x = unit(0.3, 'cm'),
@@ -23,8 +22,8 @@ clima.mod.theme <- theme(legend.position = "right", legend.title = element_text(
                      panel.background = element_blank(), axis.line = element_line(colour = "black"), 
                      plot.margin = unit(c(1,1,1,1), units = , "cm"))
 
-## DATA LOADING ----
-clim.fit.dw <- read.csv("scripts/users/mgarciacriado/encroachment_paper/final_scripts/mastersheets/clima_fit_sst.csv")
+## DATA PREP ----
+clim.fit.dw <- read.csv("mastersheets/clima_fit_sst.csv")
 
 # Add Site.ID to the mastersheet (this function is amazing)
 clim.fit.dw <- transform(clim.fit.dw, Site.ID = as.numeric(interaction(Latitude, Longitude, drop = TRUE)))
@@ -55,10 +54,9 @@ summary(mat.tun.grad.mod) # significant interaction
 plot(mat.tun.grad.mod$Sol, auto.layout = F)
 plot(mat.tun.grad.mod$VCV)
 autocorr.plot(mat.tun.grad.mod$VCV)
-save(mat.tun.grad.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/mat_tun_grad_mod.RData")
+save(mat.tun.grad.mod, file = "models/random/mat_tun_grad_mod.RData")
 
-
-## Manual predictions
+# Manual predictions
 pred.tg <- expand.grid(estimate = seq(from=min(mat.tun.dw$estimate), 
                                         to = max(mat.tun.dw$estimate), by = 0.05), 
                          precip = c(quantile(mat.tun.dw$precip, 0.20), 
@@ -70,7 +68,6 @@ pred.tg <- expand.grid(estimate = seq(from=min(mat.tun.dw$estimate),
 
 predtungrad <- predict.MCMCglmm(mat.tun.grad.mod, newdata = pred.tg, interval = "confidence", type = "terms")
 pred.raw.tun.grad <- cbind(data.frame(predtungrad), pred.tg)
-
 
 # colour palette
 mycolors.rain <- c("#eec136", "#B8B8B8", "#3182bd")
@@ -93,8 +90,7 @@ pred.raw.tun.grad$alpha.rain[pred.raw.tun.grad$precip <= 164] <- "0.6"
 pred.raw.tun.grad$alpha.rain[pred.raw.tun.grad$precip > 164 & pred.raw.tun.grad$precip < 673] <- "0.3"
 pred.raw.tun.grad$alpha.rain[pred.raw.tun.grad$precip >= 673] <- "0.6"
 
-
-## Plotting predictions
+# Plotting predictions
 (pred.tun.grad.plot <- ggplot()+ ylab("Woody cover change rate (% per year)\n") + xlab("\nTundra MAT change rate (°C per year)") +
     geom_point(data = mat.tun.dw, aes(x = estimate, y = Annual.rate), alpha = mat.tun.dw$alpha.rain, 
                colour = mat.tun.dw$color.rain, size = 5) +
@@ -116,8 +112,7 @@ summary(mat.sav.grad.mod) #non-significant interaction
 plot(mat.sav.grad.mod$Sol, auto.layout = F)
 plot(mat.sav.grad.mod$VCV)
 autocorr.plot(mat.sav.grad.mod$VCV)
-save(mat.sav.grad.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/mat_sav_grad_mod.RData")
-
+save(mat.sav.grad.mod, file = "models/random/mat_sav_grad_mod.RData")
 
 
 
@@ -131,7 +126,7 @@ summary(sav.rain) #significant relationship
 plot(sav.rain$Sol, auto.layout = F)
 plot(sav.rain$VCV)
 autocorr.plot(msav.rain$VCV)
-save(sav.rain, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/sav_rain_mod.RData")
+save(sav.rain, file = "models/random/sav_rain_mod.RData")
 
 # Predictions
 pred.sr <- expand.grid(estimate = seq(from=min(map.sav.dw$estimate), 
@@ -145,7 +140,6 @@ pred.sr <- expand.grid(estimate = seq(from=min(map.sav.dw$estimate),
 
 predsavrain <- predict.MCMCglmm(sav.rain, newdata = pred.sr, interval = "confidence", type = "terms")
 pred.raw.sav.rain <- cbind(data.frame(predsavrain), pred.sr)
-
 
 # colour palette
 mycolors.rain <- c("#eec136", "#B8B8B8", "#3182bd")
@@ -168,8 +162,7 @@ pred.raw.sav.rain$alpha.rain[pred.raw.sav.rain$precip <= 248] <- "0.6"
 pred.raw.sav.rain$alpha.rain[pred.raw.sav.rain$precip > 248 & pred.raw.sav.rain$precip < 1001] <- "0.3"
 pred.raw.sav.rain$alpha.rain[pred.raw.sav.rain$precip >= 1001] <- "0.6"
 
-
-## Plotting predictions
+# Plotting predictions
 (pred.sav.rain.plot <- ggplot()+ ylab("Woody cover change rate (% per year)\n") + xlab("\nSavanna MAP change rate (mm per year)") +
     geom_point(data = map.sav.dw, aes(x = estimate, y = Annual.rate), alpha = map.sav.dw$alpha.rain, 
                colour = map.sav.dw$color.rain, size = 5) +
@@ -182,7 +175,6 @@ pred.raw.sav.rain$alpha.rain[pred.raw.sav.rain$precip >= 1001] <- "0.6"
 
 
 
-
 ## TUNDRA PRECIP X MAP MODEL ----
 tun.rain <- MCMCglmm(Annual.rate ~ precip + estimate + precip*estimate, 
                      random = ~us(1):geo.coords, prior = prior6,
@@ -192,7 +184,7 @@ summary(tun.rain) #non-significant
 plot(tun.rain$Sol)
 plot(tun.rain$VCV)
 autocorr.plot(tun.rain$VCV)
-save(tun.rain, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/tun_rain_mod.RData")
+save(tun.rain, file = "models/random/tun_rain_mod.RData")
 
 
 
@@ -206,7 +198,7 @@ summary(map.sav.grad.mod) #non-significant interaction
 plot(map.sav.grad.mod$Sol)
 plot(map.sav.grad.mod$VCV)
 autocorr.plot(map.sav.grad.mod$VCV)
-save(map.sav.grad.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/map_sav_grad_mod.RData")
+save(map.sav.grad.mod, file = "models/random/map_sav_grad_mod.RData")
 
 
 
@@ -220,7 +212,7 @@ summary(map.tun.grad.mod) #non-significant interaction
 plot(map.tun.grad.mod$Sol)
 plot(map.tun.grad.mod$VCV)
 autocorr.plot(map.tun.grad.mod$VCV)
-save(map.tun.grad.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/map_tun_grad_mod.RData")
+save(map.tun.grad.mod, file = "models/random/map_tun_grad_mod.RData")
 
 
 
@@ -234,7 +226,7 @@ summary(tun.mat.temp.mod) #non-significant interaction
 plot(tun.mat.temp.mod$Sol)
 plot(tun.mat.temp.mod$VCV)
 autocorr.plot(tun.mat.temp.mod$VCV)
-save(tun.mat.temp.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/tun_mat_temp_mod.RData")
+save(tun.mat.temp.mod, file = "models/random/tun_mat_temp_mod.RData")
 
 
 
@@ -248,14 +240,13 @@ summary(sav.mat.temp.mod) #non-significant interaction
 plot(sav.mat.temp.mod$Sol)
 plot(sav.mat.temp.mod$VCV)
 autocorr.plot(sav.mat.temp.mod$VCV)
-save(sav.mat.temp.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/sav_mat_temp_mod.RData")
+save(sav.mat.temp.mod, file = "models/random/sav_mat_temp_mod.RData")
 
 
 
-
-## FIGURE PANEL ----
+## FIGURE 5 ----
 (full.panel <- ggarrange(effect.sizes.temp.sig, effect.sizes.prec.sig, pred.tun.grad.plot, pred.sav.rain.plot, 
                          labels = c("(a)", "(b)", "(c)", "(d)"), nrow = 2, ncol = 2, font.label = list(size = 26)))
 
-ggsave(full.panel, filename = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/figures/full_panel.png", 
+ggsave(full.panel, filename = "figures/Figure_5.png", 
        width = 65, height = 40, units = "cm")

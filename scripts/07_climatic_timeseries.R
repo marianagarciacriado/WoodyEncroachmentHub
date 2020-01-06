@@ -867,7 +867,7 @@ mcmcOutputs.estimate.prec$clim.var <- c("Jan-Feb", "Jan-Feb", "Jun-Jul", "Jun-Ju
                                        dens_mat_min, dens_map_min, dens_mat_max, dens_map_max, 
                                        labels = c("(a)", "(f)", "(b)", "(g)", "(c)", "(h)", "(d)", "(i)", "(e)", "(j)"),
                              font.label = list(size = 32), ncol = 2, nrow = 5, common.legend = TRUE, legend = "top"))
-ggsave(density.panels.c, filename = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/figures/Figure_3.png", 
+ggsave(density.panels.c, filename = "figures/Figure_3.png", 
        width = 41, height = 70, units = "cm")
 
 ## Cover change rates vs. annual climatic change rates stacked in panel (Figure S6)
@@ -875,7 +875,7 @@ ggsave(density.panels.c, filename = "scripts/users/mgarciacriado/encroachment_pa
                                   mat.min.rate, map.min.rate, mat.max.rate, map.max.rate, 
                                   labels = c("(a)", "(f)", "(b)", "(g)", "(c)", "(h)", "(d)", "(i)", "(e)", "(j)"),
                           font.label = list(size = 26), ncol =2, nrow = 5, common.legend = TRUE, legend = "top"))
-ggsave(rates.panel, filename = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/figures/Figure_S5.png", 
+ggsave(rates.panel, filename = "figures/Figure_S6.png", 
        width = 35, height = 70, units = "cm")
 
 # If you get an error saying 'scales not found' when arranging them in a panel, make sure to run all the
