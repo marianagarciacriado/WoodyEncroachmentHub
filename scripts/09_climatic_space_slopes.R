@@ -1,18 +1,19 @@
 #### Woody encroachment across biomes 
-#### Script 9. Climatic space with site-specific climatic change
-#### Mariana Garcia
+#### Script 09. Climatic space with site-specific climatic change
+#### Mariana García Criado
 #### February 2018
 
-# Load packages ----
-.libPaths("C:/R_library")
+## LIBRARIES ----
 library(dplyr)
 library(ggplot2)
 library(MCMCglmm)
 library(cowplot)
 
-##### SST change - climatic space ----
-clim.sst.cs <- read.csv("scripts/users/mgarciacriado/encroachment_paper/final_scripts/mastersheets/clima_fit_sst.csv")
 
+#### CLIMATIC SPACE WITH CHANGE OVER TIME PLOT ----
+clim.sst.cs <- read.csv("mastersheets/clima_fit_sst.csv")
+
+# filter MAT and MAP timeseries
 mat_slopes_sst <- filter(clim.sst.cs, variable == "mat")
 map_slopes_sst <- filter(clim.sst.cs, variable == "map")
 clima_slopes_sst <- merge(mat_slopes_sst, map_slopes_sst, by = "Plot.ID")
@@ -43,7 +44,7 @@ clima_slopes_sst$Annual.rate.x <- abs(clima_slopes_sst$Annual.rate.x)
           plot.margin = unit(c(1,1,1,1), units = , "cm")))
 
 
-## MAT marginal plot ----
+# MAT marginal plot
 (dens.mat.sst <- ggplot(mat_slopes_sst, aes(x = estimate, fill = Biome_type)) + geom_density(alpha = 0.6) + 
    annotate("text", x = -0.05, y = 11, label = "Savanna", color = "#F8766D", size = 6) +
    annotate("text", x = 0.1, y = 11, label = "Tundra", color = "#00BFC4", size = 6) +
@@ -65,7 +66,7 @@ clima_slopes_sst$Annual.rate.x <- abs(clima_slopes_sst$Annual.rate.x)
          plot.margin = unit(c(1,1,1,1), units = , "cm")))
 
 
-## MAP marginal plot ----
+# MAP marginal plot
 (dens.map.sst <- ggplot(map_slopes_sst, aes(x = estimate, fill = Biome_type)) + geom_density(alpha = 0.6) + coord_flip() +
    theme(legend.position = "right", panel.background = element_blank(), axis.line = element_line(colour = "black")) +
    guides(fill=guide_legend(title="Biomes")) + 
@@ -85,33 +86,29 @@ clima_slopes_sst$Annual.rate.x <- abs(clima_slopes_sst$Annual.rate.x)
          plot.margin = unit(c(1,1,1,1), units = , "cm")))
 
 
-## Complete plot with marginal plots ----
+# Full panel
 z1 <- insert_xaxis_grob(clim_space_sst, dens.mat.sst, grid::unit(1, "in"), position = "top")
 z2 <- insert_yaxis_grob(z1, dens.map.sst, grid::unit(1, "in"), position = "right")
 ggdraw(z2)
-ggplot2::ggsave(z2, filename = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/figures/Figure_S3.png", 
+ggplot2::ggsave(z2, filename = "figures/Figure_S5.png", 
                 width = 50, height = 25, units = "cm")
 
 
-## Climatic space change model ----
+## CLIMATIC SPACE CHANGE MODEL ----
 tun_matp_slopes <- filter(clima_slopes_sst, Biome_type.x == "Tundra")
 sav_matp_slopes <- filter(clima_slopes_sst, Biome_type.x == "Savanna")
 
-
-## Fitting the model with grid cells as random factor and interaction between climatic factors as fixed effects
-
-## Tundra model ----
+## Tundra model
 tun.slop.mod <- MCMCglmm(Annual.rate.x ~ estimate.x + estimate.y + estimate.x * estimate.y, 
                          data = tun_matp_slopes, random = ~us(1):geo.coords.x, 
                          nitt = 100000, burnin = 5000, thin = 30)
 
 summary(tun.slop.mod) #negative significant slope for temp change, positive non-significant for precip 
-# and negative non-significantinteraction
+# and negative non-significant interaction
 plot(tun.slop.mod$Sol, auto.layout = F)
 plot(tun.slop.mod$VCV)
 autocorr.plot(tun.slop.mod$VCV)
-save(tun.slop.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/tun_slop_mod.RData")
-
+save(tun.slop.mod, file = "models/random/tun_slop_mod.RData")
 
 # model predictions
 preddata4 <- expand.grid(estimate.x = seq(from=min(tun_matp_slopes$estimate.x), 
@@ -135,7 +132,7 @@ pred.raw.slop.tun <- cbind(data.frame(predslop.tun), preddata4)
 #no major difference in predictions between gradients
 
 
-## Savanna model ----
+## Savanna model
 sav.slop.mod <- MCMCglmm(Annual.rate.x ~ estimate.x + estimate.y + estimate.x * estimate.y, 
                          data = sav_matp_slopes, random = ~us(1):geo.coords.x, 
                          nitt = 100000, burnin = 5000, thin = 30)
@@ -144,7 +141,7 @@ summary(sav.slop.mod) # positive slopes for all, non-significant
 plot(sav.slop.mod$Sol, auto.layout = F)
 plot(sav.slop.mod$VCV)
 autocorr.plot(sav.slop.mod$VCV)
-save(sav.slop.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/sav_slop_mod.RData")
+save(sav.slop.mod, file = "models/random/sav_slop_mod.RData")
 
 # model predictions
 preddata5 <- expand.grid(estimate.y = seq(from=min(sav_matp_slopes$estimate.y), 
