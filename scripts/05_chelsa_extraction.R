@@ -1,27 +1,26 @@
 #### Woody encroachment across biomes
-#### Script 5. CHELSA raster data extraction 
-#### Mariana Garcia with help from Jakob Assmann
+#### Script 05. CHELSA raster data extraction 
+#### Mariana García Criado with help from Jakob Assmann
 #### October 2018
 
-## Libraries ----
+## LIBRARIES ----
 library(raster)
 library(rgdal)
 library(rasterVis)
 library(sp)
 
 ## NB. This script can be skipped when running all scripts sequentially, since it requires access to the downloaded
-## climatologies and time series from CHELSA (http://chelsa-climate.org/) which are stored in a hard drive
-## Contact Mariana in case you need direct access to this (mariana.garcia.criado@ed.ac.uk) 
-## For the actual climatic analysis, see Rscript named '7_climatic_timeseries'.
+## climatologies and time series raster files from CHELSA which are not stored online due to their large sizes.
+## Thse data can be downloaded directly from the CHELSA website (http://chelsa-climate.org/)
+## For the actual climatic analysis, see script named '07_climatic_timeseries'.
 
 ## Mean Annual Temperature (MAT) ----
 
-# define path to timeseries
+# Define path to timeseries
 path_to_timeseries <- "D:/Mariana/temperature/"
 test <- raster(paste0(path_to_timeseries, "CHELSA_temp_1_1979_V1.2.1.tif"))
 
 # Define the function for the whole process in a linear way
-
 calculate_mat <- function(year){ #for each year, do the following 
   if(!file.exists(paste0(path_to_timeseries, "CHELSA_mat_", year, ".tif"))){
     months <- 1:12 #for each month
@@ -29,7 +28,7 @@ calculate_mat <- function(year){ #for each year, do the following
     print(filenames)
     month_stack <- stack(filenames) #stack all monthly raster files for each year
     crs(month_stack) <- CRS("+proj=longlat +datum=WGS84 +no_defs") # Set CRS (as chelsa files have not set it by default, grabbed CRS from chelsa website)
-    year_mean <- mean(month_stack) #calculate the mean temperature for each zear
+    year_mean <- mean(month_stack) #calculate the mean temperature for each year
     writeRaster(year_mean, paste0(path_to_timeseries, "CHELSA_mat_", year, ".tif")) #create a raster file for each year with MAT value
     print(paste("Saved", year)) #returns a message to report on progress on console
     return(paste("Done with", year)) #return value of function to be stored on list
@@ -102,10 +101,10 @@ for(i in 1979:2013){
   calculate_mat_janfeb(i)
 }
 
-# Jan-Feb files are stored in the hard drive (D:/chelsa_mat_janfeb)
+# Jan-Feb temp files are stored in the hard drive (D:/chelsa_mat_janfeb)
 
 
-## Jun&July Mean Temperature ----
+## June&July Mean Temperature ----
 path_to_mat_junjul <- "D:/chelsa_tmean/"
 test4 <- raster(paste0(path_to_mat_junjul, "CHELSA_tmean_1979_06_V1.2.1.tif"))
 
@@ -131,7 +130,7 @@ for(i in 1979:2013){
   calculate_mat_junjul(i)
 }
 
-# Jun-Jul files are stored in the hard drive (D:/chelsa_mat_junjul)
+# Jun-Jul temp files are stored in the hard drive (D:/chelsa_mat_junjul)
 
 
 
@@ -161,10 +160,10 @@ for(i in 1979:2013){
   calculate_map_janfeb(i)
 }
 
-# Jan-Feb files are stored in the hard drive (D:/chelsa_map_janfeb)
+# Jan-Feb precip files are stored in the hard drive (D:/chelsa_map_janfeb)
 
 
-## Jun&July Mean Precipitation ----
+## June&July Mean Precipitation ----
 path_to_map_junjul <- "D:/chelsa_precip/precip_timeseries/"
 test5 <- raster(paste0(path_to_map_junjul, "CHELSA_prec_1979_06_V1.2.1.tif"))
 
@@ -190,4 +189,4 @@ for(i in 1979:2013){
   calculate_map_junjul(i)
 }
 
-# Jun-Jul files are stored in the hard drive (D:/chelsa_map_junjul)
+# Jun-July precip files are stored in the hard drive (D:/chelsa_map_junjul)
