@@ -340,6 +340,8 @@ sst.fit.slopes <- clima.fit %>%
   filter(term == "year") %>%
   dplyr::select(variable, Plot.ID, estimate)
 
+write.csv(sst.fit.slopes, "mastersheets/sst_fit_slopes.csv")
+
 # Merge the slopes with the vegetation/trend data in one final object
 clima.fit.sst <- clima.fit %>% dplyr::select(Biome_type, Plot.ID, Latitude, Longitude, tempc, precip, 
                                              variable, Annual.rate, Trend, Biome_trend, geo.coords)

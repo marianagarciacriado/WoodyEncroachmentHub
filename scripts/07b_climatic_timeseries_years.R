@@ -1,26 +1,22 @@
 #### Woody encroachment across biomes
-#### Script 7b. Climatic timeseries models & figures - excluding sites from before 1979 and after 2013
-#### Mariana Garcia
+#### Script 07b. Climatic timeseries models & figures - 
+#### 'Rate vs rate' analysis excluding sites from before 1979 and after 2013
+#### Mariana García Criado
 #### September 2019
 
-## Libraries ----
-.libPaths("C:/R_library")
-
+## LIBRARIES ----
 library(tidyverse)
 library(ggplot2)
 library(broom)
 library(MCMCglmm)
-library(MCMCvis)
 library(cowplot)
 library(ggpubr)
-library(grid)
-library(gridExtra)
 
-## CREATE OBJECTS ----
+## DATA PREP ----
 
-## Load database (from script #6)
-clima.fit <- read.csv("scripts/users/mgarciacriado/encroachment_paper/mastersheets/clima_fit.csv")
-
+# Load databases (from script #6)
+clima.fit <- read.csv("mastersheets/clima_fit.csv")
+sst.fit.slopes <- read.csv("mastersheets/sst_fit_slopes.csv")
 
 # Create a new object including start and end years
 clima.year <- clima.fit %>% dplyr::select(Biome_type, Plot.ID, Latitude, Longitude, tempc, precip, 
@@ -29,17 +25,15 @@ clima.year <- clima.fit %>% dplyr::select(Biome_type, Plot.ID, Latitude, Longitu
 clima.years <- inner_join(clima.year, sst.fit.slopes, by = c("Plot.ID" = "Plot.ID", "variable" = "variable"))
 clima.years.final <- distinct(clima.years)
 
-write.csv(clima.years.final, "scripts/users/mgarciacriado/encroachment_paper/final_scripts/mastersheets/clima_years.csv")
+write.csv(clima.years.final, "mastersheets/clima_years.csv")
 
-
-## Remove studies which records started before 1979
+# Remove studies which records started before 1979
 clima.years.1979 <- subset(clima.years.final, year.b4 >= 1979)
 
-## Remove studies which records started before 1979 and those that finished after 2013
+# Remove studies which records started before 1979 and those that finished after 2013
 clima.years.2013 <- subset(clima.years.1979, End_year <= 2013)
 
-
-## Create individual climatic variable objects
+# Create individual climatic variable objects
 mat_y <- filter(clima.years.2013, variable == "mat")
 map_y <- filter(clima.years.2013, variable == "map")
 mat_junjul_y <- filter(clima.years.2013, variable == "mat_junjul")
@@ -53,17 +47,13 @@ map_max_y <- filter(clima.years.2013, variable == 'map_max')
 
 
 
-
-
-
-## FITTING MODELS EXCLUDING <1979 & >2013 ----
+## MODELS WITHOUT RECORDS <1979 & >2013 ----
 
 #### Mean Annual Temperature ----
 mat.y.tundra <- filter(mat_y, Biome_type == "Tundra")
 mat.y.sav <- filter(mat_y, Biome_type == "Savanna")
 
-
-## Tundra: Fitting the model including location as a random factor and random intercepts
+# Tundra model
 mat.y.tun.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, prior = prior6,
                         data = mat.y.tundra, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 summary(mat.y.tun.mod) #negative significant relationship, same as main model
@@ -71,10 +61,9 @@ plot(mat.y.tun.mod$Sol)
 plot(mat.y.tun.mod$VCV)
 autocorr.plot(mat.y.tun.mod$VCV)
 hist(mcmc(mat.y.tun.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(mat.y.tun.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/mat.y.tun.mod.RData")
+save(mat.y.tun.mod, file = "models/random/mat.y.tun.mod.RData")
 
-
-## Savanna: Fitting the model with location as a random factorand random intercepts
+# Savanna model
 mat.y.sav.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, prior = prior6, 
                         data = mat.y.sav, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -83,10 +72,7 @@ plot(mat.y.sav.mod$Sol)
 plot(mat.y.sav.mod$VCV)
 autocorr.plot(mat.y.sav.mod$VCV)
 hist(mcmc(mat.y.sav.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(mat.y.sav.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/mat.y.sav.mod.RData")
-
-
-
+save(mat.y.sav.mod, file = "models/random/mat.y.sav.mod.RData")
 
 
 
@@ -94,7 +80,7 @@ save(mat.y.sav.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final
 mat.junjul.y.tun <- filter(mat_junjul_y, Biome_type == "Tundra")
 mat.junjul.y.sav <- filter(mat_junjul_y, Biome_type == "Savanna")
 
-## Tundra: Fitting the model including biogeography as a random factor
+# Tundra model
 mat.junjul.y.tun.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                                data = mat.junjul.y.tun, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -103,10 +89,9 @@ plot(mat.junjul.y.tun.mod$Sol)
 plot(mat.junjul.y.tun.mod$VCV)
 autocorr.plot(mat.junjul.y.tun.mod$VCV)
 hist(mcmc(mat.junjul.y.tun.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(mat.junjul.y.tun.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/mat.junjul.y.tun.mod.RData")
+save(mat.junjul.y.tun.mod, file = "models/random/mat.junjul.y.tun.mod.RData")
 
-
-## Savanna: Fitting the model with biogeography as a random factor
+# Savanna model
 mat.junjul.y.sav.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                                data = mat.junjul.y.sav, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -119,14 +104,11 @@ save(mat.junjul.y.sav.mod, file = "scripts/users/mgarciacriado/encroachment_pape
 
 
 
-
-
 #### Jan-Feb Mean Temperature ----
 mat.janfeb.y.savanna <- filter(mat_janfeb_y, Biome_type == "Savanna")
 mat.janfeb.y.tundra <- filter(mat_janfeb_y, Biome_type == "Tundra")
 
-
-## Tundra: Fitting the model including biogeography as a random factor
+# Tundra model
 mat.janfeb.y.tun.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                                data = mat.janfeb.y.tundra, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -135,10 +117,9 @@ plot(mat.janfeb.y.tun.mod$Sol)
 plot(mat.janfeb.y.tun.mod$VCV)
 autocorr.plot(mat.janfeb.y.tun.mod$VCV)
 hist(mcmc(mat.janfeb.y.tun.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(mat.janfeb.y.tun.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/mat.janfeb.y.tun.mod.RData")
+save(mat.janfeb.y.tun.mod, file = "models/random/mat.janfeb.y.tun.mod.RData")
 
-
-## Savanna: Fitting the model with biogeography as a random factor
+# Savanna model
 mat.janfeb.y.sav.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                                data = mat.janfeb.y.savanna, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -151,13 +132,11 @@ save(mat.janfeb.y.sav.mod, file = "scripts/users/mgarciacriado/encroachment_pape
 
 
 
-
-
 #### Mean Annual Precipitation (MAP) ----
 map.savanna.y <- filter(map_y, Biome_type == "Savanna")
 map.tundra.y <- filter(map_y, Biome_type == "Tundra")
 
-## Tundra: Fitting the model including biogeography as a random factor
+# Tundra model
 map.tun.y.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                         data = map.tundra.y, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -166,10 +145,9 @@ plot(map.tun.y.mod$Sol)
 plot(map.tun.y.mod$VCV)
 autocorr.plot(map.tun.y.mod$VCV)
 hist(mcmc(map.tun.y.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(map.tun.y.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/map.tun.y.mod.RData")
+save(map.tun.y.mod, file = "models/random/map.tun.y.mod.RData")
 
-
-## Savanna: Fitting the model with biogeography as a random factor
+# Savanna model
 map.sav.y.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                         data = map.savanna.y, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -178,9 +156,7 @@ plot(map.sav.y.mod$Sol)
 plot(map.sav.y.mod$VCV)
 autocorr.plot(map.sav.y.mod$VCV)
 hist(mcmc(map.sav.y.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(map.sav.y.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/map.sav.y.mod.RData")
-
-
+save(map.sav.y.mod, file = "models/random/map.sav.y.mod.RData")
 
 
 
@@ -188,7 +164,7 @@ save(map.sav.y.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final
 map.janfeb.y.sav <- filter(map_janfeb_y, Biome_type == "Savanna")
 map.janfeb.y.tun <- filter(map_janfeb_y, Biome_type == "Tundra")
 
-## Tundra: Fitting the model including biogeography as a random factor
+# Tundra model
 map.janfeb.y.tun.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                                data = map.janfeb.y.tun, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -197,9 +173,9 @@ plot(map.janfeb.y.tun.mod$Sol)
 plot(map.janfeb.y.tun.mod$VCV)
 autocorr.plot(map.janfeb.y.tun.mod$VCV)
 hist(mcmc(map.janfeb.y.tun.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(map.janfeb.y.tun.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/map.janfeb.y.tun.mod.RData")
+save(map.janfeb.y.tun.mod, file = "models/random/map.janfeb.y.tun.mod.RData")
 
-## Savanna: Fitting the model with biogeography as a random factor
+# Savanna model
 map.janfeb.y.sav.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                                data = map.janfeb.y.sav, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -208,10 +184,7 @@ plot(map.janfeb.y.sav.mod$Sol, ask = F)
 plot(map.janfeb.y.sav.mod$VCV)
 autocorr.plot(map.janfeb.y.sav.mod$VCV)
 hist(mcmc(map.janfeb.y.sav.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(map.janfeb.y.sav.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/map.janfeb.y.sav.mod.RData")
-
-
-
+save(map.janfeb.y.sav.mod, file = "models/random/map.janfeb.y.sav.mod.RData")
 
 
 
@@ -219,7 +192,7 @@ save(map.janfeb.y.sav.mod, file = "scripts/users/mgarciacriado/encroachment_pape
 map.junjul.y.tundra <- filter(map_junjul_y, Biome_type == "Tundra")
 map.junjul.y.savanna <- filter(map_junjul_y, Biome_type == "Savanna")
 
-## Tundra: Fitting the model including biogeography as a random factor
+# Tundra model
 map.junjul.y.tun.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                                data = map.junjul.y.tundra, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -228,10 +201,9 @@ plot(map.junjul.y.tun.mod$Sol)
 plot(map.junjul.y.tun.mod$VCV)
 autocorr.plot(map.junjul.y.tun.mod$VCV)
 hist(mcmc(map.junjul.y.tun.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(map.junjul.y.tun.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/map.junjul.y.tun.mod.RData")
+save(map.junjul.y.tun.mod, file = "models/random/map.junjul.y.tun.mod.RData")
 
-
-## Savanna: Fitting the model with biogeography as a random factor
+# Savanna model
 map.junjul.y.sav.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                                data = map.junjul.y.savanna, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -240,10 +212,7 @@ plot(map.junjul.y.sav.mod$Sol)
 plot(map.junjul.y.sav.mod$VCV)
 autocorr.plot(map.junjul.y.sav.mod$VCV)
 hist(mcmc(map.junjul.y.sav.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(map.junjul.y.sav.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/map.junjul.y.sav.mod.RData")
-
-
-
+save(map.junjul.y.sav.mod, file = "models/random/map.junjul.y.sav.mod.RData")
 
 
 
@@ -251,8 +220,7 @@ save(map.junjul.y.sav.mod, file = "scripts/users/mgarciacriado/encroachment_pape
 mat.min.y.tundra <- filter(mat_min_y, Biome_type == "Tundra")
 mat.min.y.savanna <- filter(mat_min_y, Biome_type == "Savanna")
 
-
-## Tundra: Fitting the model including biogeography as a random factor
+# Tundra model
 mat.min.y.tun.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                             data = mat.min.y.tundra, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -261,10 +229,9 @@ plot(mat.min.y.tun.mod$Sol)
 plot(mat.min.y.tun.mod$VCV)
 autocorr.plot(mat.min.y.tun.mod$VCV)
 hist(mcmc(mat.min.y.tun.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(mat.min.y.tun.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/mat.min.y.tun.mod.RData")
+save(mat.min.y.tun.mod, file = "models/random/mat.min.y.tun.mod.RData")
 
-
-## Savanna: Fitting the model with biogeography as a random factor
+# Savanna model
 mat.min.y.sav.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                             data = mat.min.y.savanna, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -273,9 +240,7 @@ plot(mat.min.y.sav.mod$Sol)
 plot(mat.min.y.sav.mod$VCV)
 autocorr.plot(mat.min.y.sav.mod$VCV)
 hist(mcmc(mat.min.y.sav.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(mat.min.y.sav.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/mat.min.y.sav.mod.RData")
-
-
+save(mat.min.y.sav.mod, file = "models/random/mat.min.y.sav.mod.RData")
 
 
 
@@ -283,8 +248,7 @@ save(mat.min.y.sav.mod, file = "scripts/users/mgarciacriado/encroachment_paper/f
 mat.max.y.tundra <- filter(mat_max_y, Biome_type == "Tundra")
 mat.max.y.savanna <- filter(mat_max_y, Biome_type == "Savanna")
 
-
-## Tundra: Fitting the model including biogeography as a random factor
+# Tundra model
 mat.max.y.tun.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                             data = mat.max.y.tundra, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -293,10 +257,9 @@ plot(mat.max.y.tun.mod$Sol)
 plot(mat.max.y.tun.mod$VCV)
 autocorr.plot(mat.max.y.tun.mod$VCV)
 hist(mcmc(mat.max.y.tun.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(mat.max.y.tun.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/mat.max.y.tun.mod.RData")
+save(mat.max.y.tun.mod, file = "models/random/mat.max.y.tun.mod.RData")
 
-
-## Savanna: Fitting the model with biogeography as a random factor
+# Savanna model
 mat.max.y.sav.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                             data = mat.max.y.savanna, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -305,9 +268,7 @@ plot(mat.max.y.sav.mod$Sol)
 plot(mat.max.y.sav.mod$VCV)
 autocorr.plot(mat.max.y.sav.mod$VCV)
 hist(mcmc(mat.max.y.sav.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(mat.max.y.sav.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/mat.max.y.sav.mod.RData")
-
-
+save(mat.max.y.sav.mod, file = "models/random/mat.max.y.sav.mod.RData")
 
 
 
@@ -315,8 +276,7 @@ save(mat.max.y.sav.mod, file = "scripts/users/mgarciacriado/encroachment_paper/f
 map.min.y.tundra <- filter(map_min_y, Biome_type == "Tundra")
 map.min.y.savanna <- filter(map_min_y, Biome_type == "Savanna")
 
-
-## Tundra: Fitting the model including biogeography as a random factor
+# Tundra model
 map.min.y.tun.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                             data = map.min.y.tundra, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -325,10 +285,9 @@ plot(map.min.y.tun.mod$Sol)
 plot(map.min.y.tun.mod$VCV)
 autocorr.plot(map.min.y.tun.mod$VCV)
 hist(mcmc(map.min.y.tun.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(map.min.y.tun.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/map.min.y.tun.mod.RData")
+save(map.min.y.tun.mod, file = "models/random/map.min.y.tun.mod.RData")
 
-
-## Savanna: Fitting the model with biogeography as a random factor, random intercepts
+# Savanna model
 map.min.y.sav.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                             data = map.min.y.savanna, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -337,9 +296,7 @@ plot(map.min.y.sav.mod$Sol)
 plot(map.min.y.sav.mod$VCV)
 autocorr.plot(map.min.y.sav.mod$VCV)
 hist(mcmc(map.min.y.sav.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(map.min.y.sav.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/map.min.y.sav.mod.RData")
-
-
+save(map.min.y.sav.mod, file = "models/random/map.min.y.sav.mod.RData")
 
 
 
@@ -347,8 +304,7 @@ save(map.min.y.sav.mod, file = "scripts/users/mgarciacriado/encroachment_paper/f
 map.max.y.tundra <- filter(map_max_y, Biome_type == "Tundra")
 map.max.y.savanna <- filter(map_max_y, Biome_type == "Savanna")
 
-
-## Tundra: Fitting the model including biogeography as a random factor
+# Tundra model
 map.max.y.tun.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                             data = map.max.y.tundra, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -357,10 +313,9 @@ plot(map.max.y.tun.mod$Sol)
 plot(map.max.y.tun.mod$VCV)
 autocorr.plot(map.max.y.tun.mod$VCV)
 hist(mcmc(map.max.y.tun.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(map.max.y.tun.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/map.max.y.tun.mod.RData")
+save(map.max.y.tun.mod, file = "models/random/map.max.y.tun.mod.RData")
 
-
-## Savanna: Fitting the model with biogeography as a random factor
+# Savanna model
 map.max.y.sav.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                             data = map.max.y.savanna, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -369,9 +324,7 @@ plot(map.max.y.sav.mod$Sol)
 plot(map.max.y.sav.mod$VCV)
 autocorr.plot(map.max.y.sav.mod$VCV)
 hist(mcmc(map.max.y.sav.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(map.max.y.sav.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/map.max.y.sav.mod.RData")
-
-
+save(map.max.y.sav.mod, file = "models/random/map.max.y.sav.mod.RData")
 
 
 #### EFFECT SIZES ----
@@ -413,13 +366,6 @@ readyListy <- mapply(cbind, lapply(dataListy, clean.MCMC), "modelName" = dataLis
 # Turn list of dataframes into a dataframe
 mcmcOutputsy <- as.data.frame(do.call(rbind, readyListy), stringsAsFactors = FALSE)
 
-# Write csv
-#write.csv(mcmcOutputs, file = "scripts/users/mgarciacriado/encroachment_paper/climatic_timeseries/data/mcmc_outputs_random")
-
-# Create nice summary table in html format
-#stargazer(mcmcOutputs, title = "Model results (random effects)", type = "html", summary = FALSE, 
-#          out = "scripts/users/mgarciacriado/encroachment_paper/climatic_timeseries/models/Rate_models_random.htm")
-
 # Prepare data for plotting
 mcmcOutputs.estimate.y <- mcmcOutputsy %>% filter(variable == "estimate")
 mcmcOutputs.estimate.y$Biome[mcmcOutputs.estimate.y$modelName %in% c("MAP Jan-Feb Savanna", "MAP Jun-Jul Savanna", "MAP Max Savanna", "MAP Min Savanna", "MAP Savanna", 
@@ -443,7 +389,7 @@ mcmcOutputs.estimate.y.prec$clim.var <- c("Jan-Feb", "Jan-Feb", "Jun-Jul", "Jun-
 
 ## PLOTS ---
 
-# plotting temperature effect sizes
+## plotting temperature effect sizes
 (effect.sizes.temp.y <- ggplot(mcmcOutputs.estimate.y.temp, aes(x = factor(clim.var), y = post.mean, fill = factor(Biome))) + 
     geom_bar(stat = "identity", alpha = 0.6, position=position_dodge(), width = 0.7) +
     geom_errorbar(aes(ymin=l.95..CI, ymax=u.95..CI), position = position_dodge(0.7), width = 0.25) + 
@@ -463,7 +409,7 @@ mcmcOutputs.estimate.y.prec$clim.var <- c("Jan-Feb", "Jan-Feb", "Jun-Jul", "Jun-
     annotate("text", x = 5.18, y = 0.5, label = "*", size = 10))
 
 
-# plotting precipitation effect sizes
+## plotting precipitation effect sizes
 (effect.sizes.prec.y <- ggplot(mcmcOutputs.estimate.y.prec, aes(x = factor(clim.var), y = post.mean, fill = factor(Biome))) + 
     geom_bar(stat = "identity", alpha = 0.6, position=position_dodge(), width = 0.7) + 
     geom_errorbar(aes(ymin=l.95..CI, ymax=u.95..CI), position = position_dodge(0.7), width = 0.25) + 
@@ -474,15 +420,12 @@ mcmcOutputs.estimate.y.prec$clim.var <- c("Jan-Feb", "Jan-Feb", "Jun-Jul", "Jun-
           axis.text.y  = element_text(vjust=0.5, size=26, colour = "black"), 
           legend.text = element_text(size=26), legend.spacing.x = unit(0.3, 'cm')))
 
-
 # significant effects at pMCMC < 0.05
 (effect.sizes.prec.sig.y <- effect.sizes.prec.y +  
     annotate("text", x = 4.84, y = 0.1, label = "*", size = 10))
 
 
-## Combine effect sizes plots (excluding records before 1979 and after 2013 
+## Combine effect sizes plots (excluding records before 1979 and after 2013) 
 (effect.sizes.panel.y <- ggarrange(effect.sizes.temp.sig.y, effect.sizes.prec.sig.y, labels = c("(a)", "(b)"), 
                                font.label = list(size = 26), common.legend = TRUE, legend = "right"))
-ggsave(effect.sizes.panel.y, filename = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/figures/Figure_4_v2_minus79_13.png", 
-       width = 60, height = 20, units = "cm")
 
