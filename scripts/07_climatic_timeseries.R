@@ -1,23 +1,19 @@
 #### Woody encroachment across biomes
-#### Script 7. Climatic timeseries models & figures
-#### Mariana Garcia
+#### Script 07. Climatic timeseries models & figures
+#### Mariana García Criado
 #### April - October 2018
 
-## Libraries ----
-.libPaths("C:/R_library")
-
+## LIBRARIES ----
 library(tidyverse)
 library(ggplot2)
 library(broom)
 library(MCMCglmm)
-library(MCMCvis)
 library(stargazer)
 library(cowplot)
 library(ggpubr)
-library(grid)
-library(gridExtra)
 
-## Setting the theme -----
+
+## THEME -----
 clima.theme <- theme(legend.title = element_blank(), 
                      legend.text = element_text(size=30), legend.key = element_blank(), 
                      legend.spacing.x = unit(0.3, 'cm'),
@@ -30,9 +26,10 @@ clima.theme <- theme(legend.title = element_blank(),
                      panel.background = element_blank(), axis.line = element_line(colour = "black"), 
                      plot.margin = unit(c(1,1,1,1), units = , "cm"))
 
-## Extracting individiual climatic variables ----
-clim.fit.ms <- read.csv("scripts/users/mgarciacriado/encroachment_paper/final_scripts/mastersheets/clima_fit_sst.csv")
+## DATA PREP ----
+clim.fit.ms <- read.csv("mastersheets/clima_fit_sst.csv")
 
+# Extracting individiual climatic variables
 mat <- filter(clim.fit.ms, variable == "mat")
 map <- filter(clim.fit.ms, variable == "map")
 mat_junjul <- filter(clim.fit.ms, variable == "mat_junjul")
@@ -45,9 +42,17 @@ map_min <- filter(clim.fit.ms, variable == 'map_min')
 map_max <- filter(clim.fit.ms, variable == 'map_max')
 
 
-#### Mean Annual Temperature ---- 
+## MEAN ANNUAL TEMPERATURE ---- 
 
-## Density plots with changes in MAT 
+## MAT change model
+dens.mat.model <- MCMCglmm(estimate ~ Biome_type + 0, data = mat, 
+                  nitt = 100000, burnin = 5000, thin = 30)
+summary(dens.mat.model) #significant increase in MAT both in tundra and savanna
+plot(dens.mat.model$Sol)
+plot(dens.mat.model$VCV)
+save(dens.mat.model, file = "models/fixed/dens.mat.model.RData")
+
+# Density plots with MAT change over time
 (dens_mat <- ggplot(mat, aes(x = estimate, fill = Biome_type)) + geom_density(alpha = 0.6) + 
    ylab("Density\n") + xlab("\nChange in MAT (°C per year)") +
    geom_vline(xintercept = 0) + 
@@ -56,26 +61,17 @@ map_max <- filter(clim.fit.ms, variable == 'map_max')
    clima.theme)
 
 
-## MAT change model
-dens.mat.model <- MCMCglmm(estimate ~ Biome_type + 0, data = mat, 
-                  nitt = 100000, burnin = 5000, thin = 30)
-summary(dens.mat.model) #significant increase in MAT both in tundra and savanna
-plot(dens.mat.model$Sol)
-plot(dens.mat.model$VCV)
-save(dens.mat.model, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/fixed/dens.mat.model.RData")
-
-
 ## Cover change rate as function of MAT annual change model
-# In the Tundra
-mat.tundra <- filter(mat, Biome_type == "Tundra")
 
-
-## Defining prior - parameter-expanded prior with inverse Wishart distribution
+# Defining prior - parameter-expanded prior with inverse Wishart distribution
 a <- 1000
 prior6 <- list(R = list(V = diag(1), nu = 0.002),
                G = list(G1 = list(V = diag(1), nu = 1, alpha.mu = 0, alpha.V = diag(1)*a)))
 
-## Fitting the model including location as a random factor and random intercepts
+## In the tundra
+mat.tundra <- filter(mat, Biome_type == "Tundra")
+
+# Fitting the model including location as a random factor and random intercepts
 mat.tun.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, prior = prior6,
                          data = mat.tundra, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 summary(mat.tun.mod) # significant negative slope
@@ -83,8 +79,7 @@ plot(mat.tun.mod$Sol, auto.layout = F)
 plot(mat.tun.mod$VCV)
 autocorr.plot(mat.tun.mod$VCV)
 hist(mcmc(mat.tun.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(mat.tun.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/mat.tun.mod.RData")
-
+save(mat.tun.mod, file = "models/random/mat.tun.mod.RData")
 
 # Checking number of studies in each tundra grid cell
 grid_cell_t <- mat.tundra %>% group_by(geo.coords) %>% summarise(num_studies = length(unique(Plot.ID)))
@@ -98,7 +93,7 @@ pred.raw.mat.tundra <- cbind(mat.tundra, pred.mat.tundra)
 ## In the savanna
 mat.savanna <- filter(mat, Biome_type == "Savanna")
 
-## Fitting the model with biogeography as a random factor
+## Fitting the model
 mat.sav.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                            data = mat.savanna, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -107,8 +102,7 @@ plot(mat.sav.mod$Sol, auto.layout = F)
 plot(mat.sav.mod$VCV)
 autocorr.plot(mat.sav.mod$VCV)
 hist(mcmc(mat.sav.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(mat.sav.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/mat.sav.mod.RData")
-
+save(mat.sav.mod, file = "models/random/mat.sav.mod.RData")
 
 # Checking number of studies in each savanna grid cell
 grid_cell_s <- mat.savanna %>% group_by(geo.coords) %>% summarise(num_studies = length(unique(Plot.ID)))
@@ -129,9 +123,17 @@ pred.raw.mat <- rbind(pred.raw.mat.savanna, pred.raw.mat.tundra)
     ylab("Cover change rate\n(% per year)\n") + xlab("\nChange in MAT\n(°C per year)") + clima.theme)
 
 
-#### June-July Mean Temperature ----
+## JUNE-JULY MEAN TEMPERATURE ----
 
-## Density plots with changes in June-July Mean Temp 
+## June-July MAT change model
+dens.mat.junjul.mod <- MCMCglmm(estimate ~ Biome_type + 0, data = mat_junjul, 
+                                nitt = 100000, burnin = 5000, thin = 30)
+summary(dens.mat.junjul.mod) # there have been significant increases in tundra and savanna Jun-Jul MAT 
+plot(dens.mat.junjul.mod$Sol)
+plot(dens.mat.junjul.mod$VCV)
+save(dens.mat.junjul.mod, file = "models/fixed/dens.mat.junjul.RData")
+
+# Density plots with changes in June-July Mean Temp 
 (dens_mat_junjul <- ggplot(mat_junjul, aes(x = estimate, fill = Biome_type)) + geom_density(alpha = 0.5) + 
    ylab("Density\n") + xlab("\nChange in June-July Temperature\n(°C per year)") +
    geom_vline(xintercept = 0) + 
@@ -139,19 +141,12 @@ pred.raw.mat <- rbind(pred.raw.mat.savanna, pred.raw.mat.tundra)
    geom_vline(xintercept = 0.04583, linetype = "dashed", color = "turquoise4") + 
    clima.theme)
 
-# Model for the density plot
-dens.mat.junjul.mod <- MCMCglmm(estimate ~ Biome_type + 0, data = mat_junjul, 
-                           nitt = 100000, burnin = 5000, thin = 30)
-summary(dens.mat.junjul.mod) # there have been significant increases in tundra and savanna Jun-Jul MAT 
-plot(dens.mat.junjul.mod$Sol)
-plot(dens.mat.junjul.mod$VCV)
-save(dens.mat.junjul.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/fixed/dens.mat.junjul.RData")
+## Cover change rate as function of June-July mean temperature annual change model
 
-## Modeling Annual encroachment rate as function of MAT annual change
-# In the Tundra
+## In the Tundra
 mat.junjul.tundra <- filter(mat_junjul, Biome_type == "Tundra")
 
-## Fitting the model including biogeography as a random factor
+# Fitting the model
 mat.junjul.tun.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                            data = mat.junjul.tundra, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -160,8 +155,7 @@ plot(mat.junjul.tun.mod$Sol, ask = F)
 plot(mat.junjul.tun.mod$VCV)
 autocorr.plot(mat.junjul.tun.mod$VCV)
 hist(mcmc(mat.junjul.tun.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(mat.junjul.tun.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/mat.junjul.tun.mod.RData")
-
+save(mat.junjul.tun.mod, file = "models/random/mat.junjul.tun.mod.RData")
 
 # Predicting values from the model
 pred.mat.junjul.tundra <- predict.MCMCglmm(mat.junjul.tun.mod, interval = "confidence")
@@ -172,7 +166,7 @@ pred.raw.mat.junjul.tundra <- cbind(mat.junjul.tundra, pred.mat.junjul.tundra)
 ## In the savanna
 mat.junjul.savanna <- filter(mat_junjul, Biome_type == "Savanna")
 
-## Fitting the model with biogeography as a random factor
+# Fitting the model
 mat.junjul.sav.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                              data = mat.junjul.savanna, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -181,8 +175,7 @@ plot(mat.junjul.sav.mod$Sol, ask = F)
 plot(mat.junjul.sav.mod$VCV)
 autocorr.plot(mat.junjul.sav.mod$VCV)
 hist(mcmc(mat.junjul.sav.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(mat.junjul.sav.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/mat.junjul.sav.mod.RData")
-
+save(mat.junjul.sav.mod, file = "models/random/mat.junjul.sav.mod.RData")
 
 # Predicting values from the model
 pred.mat.junjul.savanna <- predict.MCMCglmm(mat.junjul.sav.mod, interval = "confidence")
@@ -199,9 +192,17 @@ pred.raw.mat.junjul <- rbind(pred.raw.mat.junjul.savanna, pred.raw.mat.junjul.tu
     ylab("Cover change rate\n(% per year)\n") + xlab("\nChange in June-July Temperature\n(°C per year)") + clima.theme)
 
 
-#### Jan-Feb Mean Temperature ----
+## JAN-FEB MEAN TEMPERATURE ----
 
-## Density plots with changes in January-February Mean Temp 
+## January-February Mean Temp over time model
+dens.mat.janfeb.mod <- MCMCglmm(estimate ~ Biome_type + 0, data = mat_janfeb, 
+                                nitt = 100000, burnin = 5000, thin = 30)
+summary(dens.mat.janfeb.mod) #there have been significant increases in tundra and savanna Jan-Feb mean temp 
+plot(dens.mat.janfeb.mod$Sol)
+plot(dens.mat.janfeb.mod$VCV)
+save(dens.mat.janfeb.mod, file = "models/fixed/dens.mat.janfeb.RData")
+
+# Density plots with changes in Jan-Feb mean temp
 (dens_mat_janfeb <- ggplot(mat_janfeb, aes(x = estimate, fill = Biome_type)) + geom_density(alpha = 0.5) + 
    ylab("Density\n") + xlab("\nChange in Jan-Feb Temperature\n(°C per year)") +
    geom_vline(xintercept = 0) + 
@@ -209,20 +210,12 @@ pred.raw.mat.junjul <- rbind(pred.raw.mat.junjul.savanna, pred.raw.mat.junjul.tu
    geom_vline(xintercept = 0.06821, linetype = "dashed", color = "turquoise4") + 
    clima.theme)
 
-# Model for the density plot
-dens.mat.janfeb.mod <- MCMCglmm(estimate ~ Biome_type + 0, data = mat_janfeb, 
-                                nitt = 100000, burnin = 5000, thin = 30)
-summary(dens.mat.janfeb.mod) #there have been significant increases in tundra and savanna Jan-Feb MAT 
-plot(dens.mat.janfeb.mod$Sol)
-plot(dens.mat.janfeb.mod$VCV)
-save(dens.mat.janfeb.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/fixed/dens.mat.janfeb.RData")
+## Cover change rate as function of Jan-Feb mean temperature annual change model
 
-
-## Modeling Annual encroachment rate as function of MAT Jan-Feb annual change
-# In the Tundra
+## In the Tundra
 mat.janfeb.tundra <- filter(mat_janfeb, Biome_type == "Tundra")
 
-## Fitting the model including biogeography as a random factor
+# Fitting the model 
 mat.janfeb.tun.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                                   data = mat.janfeb.tundra, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -231,8 +224,7 @@ plot(mat.janfeb.tun.mod$Sol, ask = F)
 plot(mat.janfeb.tun.mod$VCV)
 autocorr.plot(mat.janfeb.tun.mod$VCV)
 hist(mcmc(mat.janfeb.tun.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(mat.janfeb.tun.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/mat.janfeb.tun.mod.RData")
-
+save(mat.janfeb.tun.mod, file = "models/random/mat.janfeb.tun.mod.RData")
 
 # Predicting values from the model
 pred.mat.janfeb.tundra <- predict.MCMCglmm(mat.janfeb.tun.mod, interval = "confidence")
@@ -243,7 +235,7 @@ pred.raw.mat.janfeb.tundra <- cbind(mat.janfeb.tundra, pred.mat.janfeb.tundra)
 ## In the savanna
 mat.janfeb.savanna <- filter(mat_janfeb, Biome_type == "Savanna")
 
-## Fitting the model with biogeography as a random factor
+# Fitting the model
 mat.janfeb.sav.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                                     data = mat.janfeb.savanna, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -252,8 +244,7 @@ plot(mat.janfeb.sav.mod$Sol, ask = F)
 plot(mat.janfeb.sav.mod$VCV)
 autocorr.plot(mat.janfeb.sav.mod$VCV)
 hist(mcmc(mat.janfeb.sav.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(mat.janfeb.sav.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/mat.janfeb.sav.mod.RData")
-
+save(mat.janfeb.sav.mod, file = "models/random/mat.janfeb.sav.mod.RData")
 
 # Predicting values from the model
 pred.mat.janfeb.savanna <- predict.MCMCglmm(mat.janfeb.sav.mod, interval = "confidence")
@@ -271,9 +262,17 @@ pred.raw.mat.janfeb <- rbind(pred.raw.mat.janfeb.savanna, pred.raw.mat.janfeb.tu
     ylab("Cover change rate\n(% per year)\n") + xlab("\nChange in Jan-Feb Temperature\n(°C per year)") + clima.theme)
 
 
-#### Mean Annual Precipitation (MAP) ----
+## MEAN ANNUAL PRECIPITATION (MAP) ----
 
-## Density plots with changes in MAP
+## Changes in MAP over time model
+dens.map.model <- MCMCglmm(estimate ~ Biome_type + 0, data = map, 
+                           nitt = 100000, burnin = 5000, thin = 30)
+summary(dens.map.model) #there have been significant increases in tundra and savanna MAP
+plot(dens.map.model$Sol)
+plot(dens.map.model$VCV)
+save(dens.map.model, file = "models/fixed/dens.map.model.RData")
+
+# Density plots with changes in MAP
 (dens_map <- ggplot(map, aes(x = estimate, fill = Biome_type)) + geom_density(alpha = 0.5) + 
    ylab("Density\n") + xlab("\nChange in MAP (mm per year)") +
    geom_vline(xintercept = 0) + 
@@ -281,21 +280,12 @@ pred.raw.mat.janfeb <- rbind(pred.raw.mat.janfeb.savanna, pred.raw.mat.janfeb.tu
    geom_vline(xintercept = 0.14759, linetype = "dashed", color = "turquoise4") + 
    clima.theme)
 
+## Cover change rate as function of MAP annual change model
 
-# Model for the density plot
-dens.map.model <- MCMCglmm(estimate ~ Biome_type + 0, data = map, 
-                           nitt = 100000, burnin = 5000, thin = 30)
-summary(dens.map.model) #there have been significant increases in tundra and savanna MAP
-plot(dens.map.model$Sol)
-plot(dens.map.model$VCV)
-save(dens.map.model, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/fixed/dens.map.model.RData")
-
-
-## Modeling Annual encroachment rate as function of MAT annual change
-# In the Tundra
+## In the Tundra
 map.tundra <- filter(map, Biome_type == "Tundra")
 
-## Fitting the model including biogeography as a random factor
+# Fitting the model 
 map.tun.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                            data = map.tundra, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -304,8 +294,7 @@ plot(map.tun.mod$Sol, ask = F)
 plot(map.tun.mod$VCV)
 autocorr.plot(map.tun.mod$VCV)
 hist(mcmc(map.tun.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(map.tun.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/map.tun.mod.RData")
-
+save(map.tun.mod, file = "models/random/map.tun.mod.RData")
 
 # Predicting values from the model
 pred.map.tundra <- predict.MCMCglmm(map.tun.mod, interval = "confidence")
@@ -316,7 +305,7 @@ pred.raw.map.tundra <- cbind(map.tundra, pred.map.tundra)
 ## In the savanna
 map.savanna <- filter(map, Biome_type == "Savanna")
 
-## Fitting the model with biogeography as a random factor
+# Fitting the model 
 map.sav.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                              data = map.savanna, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -325,8 +314,7 @@ plot(map.sav.mod$Sol, ask = F)
 plot(map.sav.mod$VCV)
 autocorr.plot(map.sav.mod$VCV)
 hist(mcmc(map.sav.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(map.sav.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/map.sav.mod.RData")
-
+save(map.sav.mod, file = "models/random/map.sav.mod.RData")
 
 # Predicting values from the model
 pred.map.savanna <- predict.MCMCglmm(map.sav.mod, interval = "confidence")
@@ -344,9 +332,17 @@ pred.raw.map <- rbind(pred.raw.map.savanna, pred.raw.map.tundra)
     ylab("Cover change rate\n(% per year)\n") + xlab("\nChange in MAP\n(mm per year)") + clima.theme)     
 
 
-#### January-February Mean Precipitation ----
+## JAN-FEB MEAN PRECIPITATION ----
 
-## Density plots with changes in January-February Mean Prec
+## Jan-Feb mean precip changes over time model
+dens.map.janfeb.mod <- MCMCglmm(estimate ~ Biome_type + 0, data = map_janfeb, 
+                                nitt = 100000, burnin = 5000, thin = 30)
+summary(dens.map.janfeb.mod) #precipitation has increased in the savanna significantly
+plot(dens.map.janfeb.mod$Sol)
+plot(dens.map.janfeb.mod$VCV)
+save(dens.map.janfeb.mod, file = "models/fixed/dens.map.janfeb.RData")
+
+# Density plots with changes in January-February Mean Prec
 (dens_map_janfeb <- ggplot(map_janfeb, aes(x = estimate, fill = Biome_type)) + geom_density(alpha = 0.5) + 
    ylab("Density\n") + xlab("\nChange in Jan-Feb Precipitation\n(mm per year)") +
    geom_vline(xintercept = 0) + 
@@ -354,21 +350,12 @@ pred.raw.map <- rbind(pred.raw.map.savanna, pred.raw.map.tundra)
    geom_vline(xintercept = 0.17830, linetype = "dashed", color = "turquoise4") + 
    clima.theme)
 
+## Cover change rate as function of Jan-Feb mean precip annual change model
 
-# Model for the density plot
-dens.map.janfeb.mod <- MCMCglmm(estimate ~ Biome_type + 0, data = map_janfeb, 
-                                nitt = 100000, burnin = 5000, thin = 30)
-summary(dens.map.janfeb.mod) #precipitation has increased in the savanna significantly
-plot(dens.map.janfeb.mod$Sol)
-plot(dens.map.janfeb.mod$VCV)
-save(dens.map.janfeb.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/fixed/dens.map.janfeb.RData")
-
-
-## Modeling Annual encroachment rate as function of MAP Jan-Feb annual change
-# In the Tundra
+## In the Tundra
 map.janfeb.tundra <- filter(map_janfeb, Biome_type == "Tundra")
 
-## Fitting the model including biogeography as a random factor
+# Fitting the model 
 map.janfeb.tun.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                                   data = map.janfeb.tundra, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -377,7 +364,7 @@ plot(map.janfeb.tun.mod$Sol, ask = F)
 plot(map.janfeb.tun.mod$VCV)
 autocorr.plot(map.janfeb.tun.mod$VCV)
 hist(mcmc(map.janfeb.tun.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(map.janfeb.tun.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/map.janfeb.tun.mod.RData")
+save(map.janfeb.tun.mod, file = "models/random/map.janfeb.tun.mod.RData")
 
 # Predicting values from the model
 pred.map.janfeb.tundra <- predict.MCMCglmm(map.janfeb.tun.mod, interval = "confidence")
@@ -388,7 +375,7 @@ pred.raw.map.janfeb.tundra <- cbind(map.janfeb.tundra, pred.map.janfeb.tundra)
 ## In the savanna
 map.janfeb.savanna <- filter(map_janfeb, Biome_type == "Savanna")
 
-## Fitting the model with biogeography as a random factor
+# Fitting the model
 map.janfeb.sav.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                                     data = map.janfeb.savanna, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -397,7 +384,7 @@ plot(map.janfeb.sav.mod$Sol, ask = F)
 plot(map.janfeb.sav.mod$VCV)
 autocorr.plot(map.janfeb.sav.mod$VCV)
 hist(mcmc(map.janfeb.sav.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(map.janfeb.sav.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/map.janfeb.sav.mod.RData")
+save(map.janfeb.sav.mod, file = "models/random/map.janfeb.sav.mod.RData")
 
 # Predicting values from the model
 pred.map.janfeb.savanna <- predict.MCMCglmm(map.janfeb.sav.mod, interval = "confidence")
@@ -415,9 +402,18 @@ pred.raw.map.janfeb <- rbind(pred.raw.map.janfeb.savanna, pred.raw.map.janfeb.tu
     ylab("Cover change rate\n(% per year)\n") + xlab("\nChange in Jan-Feb Precipitation\n(mm per year)") + clima.theme)
 
 
-#### June-July Mean Precipitation ----
+## JUNE-JULY MEAN PRECIPITATION ----
 
-## Density plots with changes in June-July Mean Prec 
+## Changes in June-July mean precip over time
+dens.map.junjul.mod <- MCMCglmm(estimate ~ Biome_type + 0, data = map_junjul, 
+                                nitt = 100000, burnin = 5000, thin = 30)
+summary(dens.map.junjul.mod)
+plot(dens.map.junjul.mod$Sol)
+plot(dens.map.junjul.mod$VCV)
+# there has been a significant increase in the savanna, not for tundra.
+save(dens.map.junjul.mod, file = "models/fixed/dens.map.junjul.RData")
+
+# Density plots with changes in June-July mean precip
 (dens_map_junjul <- ggplot(map_junjul, aes(x = estimate, fill = Biome_type)) + geom_density(alpha = 0.5) + 
    ylab("Density\n") + xlab("\nChange in June-July Precipitation\n(mm per year)") +
    geom_vline(xintercept = 0) + 
@@ -425,20 +421,13 @@ pred.raw.map.janfeb <- rbind(pred.raw.map.janfeb.savanna, pred.raw.map.janfeb.tu
    geom_vline(xintercept = -0.02393, linetype = "dashed", color = "turquoise4") + 
    clima.theme)
 
-# Model for the density plot
-dens.map.junjul.mod <- MCMCglmm(estimate ~ Biome_type + 0, data = map_junjul, 
-                                nitt = 100000, burnin = 5000, thin = 30)
-summary(dens.map.junjul.mod)
-plot(dens.map.junjul.mod$Sol)
-plot(dens.map.junjul.mod$VCV)
-# there has been a significant increase in the savanna, not for tundra.
-save(dens.map.junjul.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/fixed/dens.map.junjul.RData")
 
-## Modeling Annual encroachment rate as function of MAT annual change
-# In the Tundra
+## Cover change rate as function of June-July mean precip annual change model
+
+## In the Tundra
 map.junjul.tundra <- filter(map_junjul, Biome_type == "Tundra")
 
-## Fitting the model including biogeography as a random factor
+# Fitting the model
 map.junjul.tun.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                                   data = map.junjul.tundra, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -447,7 +436,7 @@ plot(map.junjul.tun.mod$Sol, ask = F)
 plot(map.junjul.tun.mod$VCV)
 autocorr.plot(map.junjul.tun.mod$VCV)
 hist(mcmc(map.junjul.tun.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(map.junjul.tun.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/map.junjul.tun.mod.RData")
+save(map.junjul.tun.mod, file = "models/random/map.junjul.tun.mod.RData")
 
 # Predicting values from the model
 pred.map.junjul.tundra <- predict.MCMCglmm(map.junjul.tun.mod, interval = "confidence")
@@ -458,7 +447,7 @@ pred.raw.map.junjul.tundra <- cbind(map.junjul.tundra, pred.map.junjul.tundra)
 ## In the savanna
 map.junjul.savanna <- filter(map_junjul, Biome_type == "Savanna")
 
-## Fitting the model with biogeography as a random factor
+# Fitting the model 
 map.junjul.sav.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                                     data = map.junjul.savanna, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -467,7 +456,7 @@ plot(map.junjul.sav.mod$Sol, ask = F)
 plot(map.junjul.sav.mod$VCV)
 autocorr.plot(map.junjul.sav.mod$VCV)
 hist(mcmc(map.junjul.sav.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(map.junjul.sav.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/map.junjul.sav.mod.RData")
+save(map.junjul.sav.mod, file = "models/random/map.junjul.sav.mod.RData")
 
 # Predicting values from the model
 pred.map.junjul.savanna <- predict.MCMCglmm(map.junjul.sav.mod, interval = "confidence")
@@ -485,9 +474,17 @@ pred.raw.map.junjul <- rbind(pred.raw.map.junjul.savanna, pred.raw.map.junjul.tu
     ylab("Cover change rate\n(% per year)\n") + xlab("\nChange in June-July Precipitation\n(mm per year)") + clima.theme)
 
 
-#### Minimum Temperature Analysis ----
+## MINIMUM TEMPERATURE ----
 
-## Density plots with changes in Min Temp 
+## Changes in Minimum Temp over time
+dens.mat.min <- MCMCglmm(estimate ~ Biome_type + 0, data = mat_min, 
+                         nitt = 100000, burnin = 5000, thin = 30)
+summary(dens.mat.min) #there have been significant increases in tundra min MAT, but not in the savanna
+plot(dens.mat.min$Sol)
+plot(dens.mat.min$VCV)
+save(dens.mat.min, file = "models/fixed/dens.mat.min.RData")
+
+# Density plots with changes in Min Temp 
 (dens_mat_min <- ggplot(mat_min, aes(x = estimate, fill = Biome_type)) + geom_density(alpha = 0.5) + 
    ylab("Density\n") + xlab("\nChange in Minimum Temperature\n(°C per year)") +
    geom_vline(xintercept = 0) + 
@@ -495,19 +492,12 @@ pred.raw.map.junjul <- rbind(pred.raw.map.junjul.savanna, pred.raw.map.junjul.tu
    geom_vline(xintercept = 0.057310, linetype = "dashed", color = "turquoise4") + 
    clima.theme)
 
-# Model for the density plot
-dens.mat.min <- MCMCglmm(estimate ~ Biome_type + 0, data = mat_min, 
-                           nitt = 100000, burnin = 5000, thin = 30)
-summary(dens.mat.min) #there have been significant increases in tundra min MAT, but not in the savanna
-plot(dens.mat.min$Sol)
-plot(dens.mat.min$VCV)
-save(dens.mat.min, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/fixed/dens.mat.min.RData")
+## Cover change rate as function of minimum temperature annual change model
 
-## Modeling Annual encroachment rate as function of MAT annual change
-# In the Tundra
+## In the Tundra
 mat.min.tundra <- filter(mat_min, Biome_type == "Tundra")
 
-## Fitting the model including biogeography as a random factor
+# Fitting the model 
 mat.min.tun.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                            data = mat.min.tundra, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -516,8 +506,7 @@ plot(mat.min.tun.mod$Sol, ask = F)
 plot(mat.min.tun.mod$VCV)
 autocorr.plot(mat.min.tun.mod$VCV)
 hist(mcmc(mat.min.tun.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(mat.min.tun.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/mat.min.tun.mod.RData")
-
+save(mat.min.tun.mod, file = "models/random/mat.min.tun.mod.RData")
 
 # Predicting values from the model
 pred.mat.min.tundra <- predict.MCMCglmm(mat.min.tun.mod, interval = "confidence")
@@ -528,7 +517,7 @@ pred.raw.mat.min.tundra <- cbind(mat.min.tundra, pred.mat.min.tundra)
 ## In the savanna
 mat.min.savanna <- filter(mat_min, Biome_type == "Savanna")
 
-## Fitting the model with biogeography as a random factor
+# Fitting the model
 mat.min.sav.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                              data = mat.min.savanna, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -537,7 +526,7 @@ plot(mat.min.sav.mod$Sol, ask = F)
 plot(mat.min.sav.mod$VCV)
 autocorr.plot(mat.min.sav.mod$VCV)
 hist(mcmc(mat.min.sav.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(mat.min.sav.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/mat.min.sav.mod.RData")
+save(mat.min.sav.mod, file = "models/random/mat.min.sav.mod.RData")
 
 # Predicting values from the model
 pred.mat.min.savanna <- predict.MCMCglmm(mat.min.sav.mod, interval = "confidence")
@@ -555,9 +544,17 @@ pred.raw.mat.min <- rbind(pred.raw.mat.min.savanna, pred.raw.mat.min.tundra)
     ylab("Cover change rate\n(% per year)\n") + xlab("\nChange in Minimum Temperature\n(°C per year)") + clima.theme)
 
 
-#### Maximum Temperature Analysis ----
+## MAXIMUM TEMPERATURE ----
 
-## Density plots with changes in Max Temp 
+## Changes in maximum temperature over time model
+dens.mat.max <- MCMCglmm(estimate ~ Biome_type + 0, data = mat_max, 
+                         nitt = 100000, burnin = 5000, thin = 30)
+summary(dens.mat.max) # Max Temp has increased in both biomes significantly
+plot(dens.mat.max$Sol)
+plot(dens.mat.max$VCV)
+save(dens.mat.max, file = "models/fixed/dens.mat.max.RData")
+
+# Density plots with changes in max temp
 (dens_mat_max <- ggplot(mat_max, aes(x = estimate, fill = Biome_type)) + geom_density(alpha = 0.5) + 
    ylab("Density\n") + xlab("\nChange in Maximum Temperature\n(°C per year)") +
    geom_vline(xintercept = 0) + 
@@ -565,19 +562,13 @@ pred.raw.mat.min <- rbind(pred.raw.mat.min.savanna, pred.raw.mat.min.tundra)
    geom_vline(xintercept = 0.04449, linetype = "dashed", color = "turquoise4") + 
    clima.theme)
 
-# Model for the density plot
-dens.mat.max <- MCMCglmm(estimate ~ Biome_type + 0, data = mat_max, 
-                         nitt = 100000, burnin = 5000, thin = 30)
-summary(dens.mat.max) # Max Temp has increased in both biomes significantly
-plot(dens.mat.max$Sol)
-plot(dens.mat.max$VCV)
-save(dens.mat.max, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/fixed/dens.mat.max.RData")
 
-## Modeling Annual encroachment rate as function of MAT annual change
-# In the Tundra
+## Cover change rate as function of maximum temp annual change model
+
+## In the Tundra
 mat.max.tundra <- filter(mat_max, Biome_type == "Tundra")
 
-## Fitting the model including biogeography as a random factor
+# Fitting the model 
 mat.max.tun.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                                data = mat.max.tundra, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -586,7 +577,7 @@ plot(mat.max.tun.mod$Sol, ask = F)
 plot(mat.max.tun.mod$VCV)
 autocorr.plot(mat.max.tun.mod$VCV)
 hist(mcmc(mat.max.tun.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(mat.max.tun.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/mat.max.tun.mod.RData")
+save(mat.max.tun.mod, file = "models/random/mat.max.tun.mod.RData")
 
 # Predicting values from the model
 pred.mat.max.tundra <- predict.MCMCglmm(mat.max.tun.mod, interval = "confidence")
@@ -597,7 +588,7 @@ pred.raw.mat.max.tundra <- cbind(mat.max.tundra, pred.mat.max.tundra)
 ## In the savanna
 mat.max.savanna <- filter(mat_max, Biome_type == "Savanna")
 
-## Fitting the model with biogeography as a random factor
+# Fitting the model
 mat.max.sav.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                                  data = mat.max.savanna, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -606,7 +597,7 @@ plot(mat.max.sav.mod$Sol, ask = F)
 plot(mat.max.sav.mod$VCV)
 autocorr.plot(mat.max.sav.mod$VCV)
 hist(mcmc(mat.max.sav.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(mat.max.sav.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/mat.max.sav.mod.RData")
+save(mat.max.sav.mod, file = "models/random/mat.max.sav.mod.RData")
 
 # Predicting values from the model
 pred.mat.max.savanna <- predict.MCMCglmm(mat.max.sav.mod, interval = "confidence")
@@ -624,9 +615,17 @@ pred.raw.mat.max <- rbind(pred.raw.mat.max.savanna, pred.raw.mat.max.tundra)
     ylab("Cover change rate\n(% per year)\n") + xlab("\nChange in Maximum Temperature\n(°C per year)") + clima.theme)
 
 
-#### Minimum Precipitation month analysis ----
+## MINIMUM PRECIPITATION ----
 
-## Density plots with changes in Min Prec
+## Minimum precip changes over time model
+dens.map.min <- MCMCglmm(estimate ~ Biome_type + 0, data = map_min, 
+                         nitt = 100000, burnin = 5000, thin = 30)
+summary(dens.map.min) # min MAP has increased significantly in the tundra, but not in the savanna
+plot(dens.map.min$Sol)
+plot(dens.map.min$VCV)
+save(dens.map.min, file = "models/fixed/dens.map.min.RData")
+
+# Density plots with changes in Min Precip
 (dens_map_min <- ggplot(map_min, aes(x = estimate, fill = Biome_type)) + geom_density(alpha = 0.5) + 
    ylab("Density\n") + xlab("\nChange in Minimum Precipitation\n(mm per year)") +
    geom_vline(xintercept = 0) + 
@@ -634,19 +633,12 @@ pred.raw.mat.max <- rbind(pred.raw.mat.max.savanna, pred.raw.mat.max.tundra)
    geom_vline(xintercept = 0.17287, linetype = "dashed", color = "turquoise4") + 
    clima.theme)
 
-# Model for the density plot
-dens.map.min <- MCMCglmm(estimate ~ Biome_type + 0, data = map_min, 
-                         nitt = 100000, burnin = 5000, thin = 30)
-summary(dens.map.min) # min MAP has increased significantly in the tundra, but not in the savanna
-plot(dens.map.min$Sol)
-plot(dens.map.min$VCV)
-save(dens.map.min, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/fixed/dens.map.min.RData")
+## Cover change rate as function of minimum precip annual change model
 
-## Modeling Annual encroachment rate as function of MAT annual change
 ## In the Tundra
 map.min.tundra <- filter(map_min, Biome_type == "Tundra")
 
-## Fitting the model including biogeography as a random factor
+# Fitting the model 
 map.min.tun.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                                data = map.min.tundra, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -655,7 +647,7 @@ plot(map.min.tun.mod$Sol, ask = F)
 plot(map.min.tun.mod$VCV)
 autocorr.plot(map.min.tun.mod$VCV)
 hist(mcmc(map.min.tun.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(map.min.tun.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/map.min.tun.mod.RData")
+save(map.min.tun.mod, file = "models/random/map.min.tun.mod.RData")
 
 # Predicting values from the model
 pred.map.min.tundra <- predict.MCMCglmm(map.min.tun.mod, interval = "confidence")
@@ -666,7 +658,7 @@ pred.raw.map.min.tundra <- cbind(map.min.tundra, pred.map.min.tundra)
 ## In the savanna
 map.min.savanna <- filter(map_min, Biome_type == "Savanna")
 
-## Fitting the model with biogeography as a random factor, random intercepts
+# Fitting the model 
 map.min.sav.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                                  data = map.min.savanna, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -675,7 +667,7 @@ plot(map.min.sav.mod$Sol, ask = F)
 plot(map.min.sav.mod$VCV)
 autocorr.plot(map.min.sav.mod$VCV)
 hist(mcmc(map.min.sav.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(map.min.sav.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/map.min.sav.mod.RData")
+save(map.min.sav.mod, file = "models/random/map.min.sav.mod.RData")
 
 # Predicting values from the model
 pred.map.min.savanna <- predict.MCMCglmm(map.min.sav.mod, interval = "confidence")
@@ -693,9 +685,17 @@ pred.raw.map.min <- rbind(pred.raw.map.min.savanna, pred.raw.map.min.tundra)
     ylab("Cover change rate\n(% per year)\n") + xlab("\nChange in Minimum Precipitation\n(mm per year)") + clima.theme)
 
 
-#### Maximum Precipitation month analysis ----
+## MAXIMUM PRECIPITATION ----
 
-## Density plots with changes in Max Prec 
+## Maximum prep change over time model
+dens.map.max <- MCMCglmm(estimate ~ Biome_type + 0, data = map_max, 
+                         nitt = 100000, burnin = 5000, thin = 30)
+summary(dens.map.max) # Max Prec has increased significantly in the savanna but not in the tundra
+plot(dens.map.max$Sol)
+plot(dens.map.max$VCV)
+save(dens.map.max, file = "models/fixed/dens.map.max.RData")
+
+# Density plots with changes in Max Prec 
 (dens_map_max <- ggplot(map_max, aes(x = estimate, fill = Biome_type)) + geom_density(alpha = 0.5) + 
    ylab("Density\n") + xlab("\nChange in Maximum Precipitation\n(mm per year)") +
    geom_vline(xintercept = 0) + 
@@ -704,19 +704,12 @@ pred.raw.map.min <- rbind(pred.raw.map.min.savanna, pred.raw.map.min.tundra)
    clima.theme)
 
 
-# Model for the density plot
-dens.map.max <- MCMCglmm(estimate ~ Biome_type + 0, data = map_max, 
-                         nitt = 100000, burnin = 5000, thin = 30)
-summary(dens.map.max) # Max Prec has increased significantly in the savanna but not in the tundra
-plot(dens.map.max$Sol)
-plot(dens.map.max$VCV)
-save(dens.map.max, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/fixed/dens.map.max.RData")
+## Cover change rate as function of max precip annual change model
 
-## Modeling Annual encroachment rate as function of MAT annual change
-# In the Tundra
+## In the Tundra
 map.max.tundra <- filter(map_max, Biome_type == "Tundra")
 
-## Fitting the model including biogeography as a random factor
+# Fitting the model
 map.max.tun.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                                data = map.max.tundra, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -725,7 +718,7 @@ plot(map.max.tun.mod$Sol, ask = F)
 plot(map.max.tun.mod$VCV)
 autocorr.plot(map.max.tun.mod$VCV)
 hist(mcmc(map.max.tun.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(map.max.tun.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/map.max.tun.mod.RData")
+save(map.max.tun.mod, file = "models/random/map.max.tun.mod.RData")
 
 # Predicting values from the model
 pred.map.max.tundra <- predict.MCMCglmm(map.max.tun.mod, interval = "confidence")
@@ -736,7 +729,7 @@ pred.raw.map.max.tundra <- cbind(map.max.tundra, pred.map.max.tundra)
 ## In the savanna
 map.max.savanna <- filter(map_max, Biome_type == "Savanna")
 
-## Fitting the model with biogeography as a random factor
+# Fitting the model
 map.max.sav.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                                  data = map.max.savanna, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
@@ -745,7 +738,7 @@ plot(map.max.sav.mod$Sol, ask = F)
 plot(map.max.sav.mod$VCV)
 autocorr.plot(map.max.sav.mod$VCV)
 hist(mcmc(map.max.sav.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(map.max.sav.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/map.max.sav.mod.RData")
+save(map.max.sav.mod, file = "models/random/map.max.sav.mod.RData")
 
 # Predicting values from the model
 pred.map.max.savanna <- predict.MCMCglmm(map.max.sav.mod, interval = "confidence")
@@ -763,7 +756,7 @@ pred.raw.map.max <- rbind(pred.raw.map.max.savanna, pred.raw.map.max.tundra)
     ylab("Cover change rate\n(% per year)\n") + xlab("\nChange in Maximum Precipitation\n(mm per year)") + clima.theme)
 
 
-#### Effect sizes (Figure 4) ----
+## EFFECT SIZES (RATE VS RATE MODELS) ----
 
 # Definining function to extract model outputs
 clean.MCMC <- function(x) {
@@ -803,11 +796,11 @@ readyList <- mapply(cbind, lapply(dataList, clean.MCMC), "modelName" = dataListN
 mcmcOutputs <- as.data.frame(do.call(rbind, readyList), stringsAsFactors = FALSE)
 
 # Write csv
-#write.csv(mcmcOutputs, file = "scripts/users/mgarciacriado/encroachment_paper/climatic_timeseries/data/mcmc_outputs_random")
+write.csv(mcmcOutputs, file = "models/rate_mods_random.csv")
 
 # Create nice summary table in html format
-#stargazer(mcmcOutputs, title = "Model results (random effects)", type = "html", summary = FALSE, 
-#          out = "scripts/users/mgarciacriado/encroachment_paper/climatic_timeseries/models/Rate_models_random.htm")
+stargazer(mcmcOutputs, title = "Model results (random effects)", type = "html", summary = FALSE, 
+          out = "models/rate_mods_random.htm")
 
 # Prepare data for plotting
 mcmcOutputs.estimate <- mcmcOutputs %>% filter(variable == "estimate")
@@ -857,7 +850,7 @@ mcmcOutputs.estimate.prec$clim.var <- c("Jan-Feb", "Jan-Feb", "Jun-Jul", "Jun-Ju
           axis.title.y = element_text(face="bold", size=26),
           axis.text.y  = element_text(vjust=0.5, size=26, colour = "black"), 
           legend.text = element_text(size=26), legend.spacing.x = unit(0.3, 'cm')))
-# these plots indicate the relative strength of the relationships between climatic change rates and annual encroachment rates 
+# these plots indicate the relative strength of the relationships between climatic change rates and annual cover change rates 
 
 # significant effects at pMCMC < 0.05
 (effect.sizes.prec.sig <- effect.sizes.prec + 
@@ -867,7 +860,7 @@ mcmcOutputs.estimate.prec$clim.var <- c("Jan-Feb", "Jan-Feb", "Jun-Jul", "Jun-Ju
 
 
 
-#### Stacked figure panels ----
+## FIGURE PANELS ----
 
 ## Density plots - climatic change (Figure 3)
 (density.panels.c <- ggpubr::ggarrange(dens_mat, dens_map, dens_mat_janfeb, dens_map_janfeb, dens_mat_junjul, dens_map_junjul,
@@ -877,7 +870,7 @@ mcmcOutputs.estimate.prec$clim.var <- c("Jan-Feb", "Jan-Feb", "Jun-Jul", "Jun-Ju
 ggsave(density.panels.c, filename = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/figures/Figure_3.png", 
        width = 41, height = 70, units = "cm")
 
-## Encroachment vs. annual climatic change stacked in panel (Figure S5)
+## Cover change rates vs. annual climatic change rates stacked in panel (Figure S6)
 (rates.panel <- ggpubr::ggarrange(mat.rate, map.rate, mat.janfeb.rate, map.janfeb.rate, mat.junjul.rate, map.junjul.rate, 
                                   mat.min.rate, map.min.rate, mat.max.rate, map.max.rate, 
                                   labels = c("(a)", "(f)", "(b)", "(g)", "(c)", "(h)", "(d)", "(i)", "(e)", "(j)"),
@@ -888,8 +881,4 @@ ggsave(rates.panel, filename = "scripts/users/mgarciacriado/encroachment_paper/f
 # If you get an error saying 'scales not found' when arranging them in a panel, make sure to run all the
 # code for all the plots again, and then it should work
 
-## Combine effect sizes plots (Figure 4) - this is now done in script 12 together with the other two plots
-#(effect.sizes.panel <- ggarrange(effect.sizes.temp.sig, effect.sizes.prec.sig, labels = c("(a)", "(b)"), 
-#                                font.label = list(size = 26), common.legend = TRUE, legend = "right"))
-#ggsave(effect.sizes.panel, filename = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/figures/Figure_4.png", 
-#       width = 60, height = 20, units = "cm")
+
