@@ -1,16 +1,16 @@
 #### Woody encroachment across biomes 
 #### Script 11. Sensitivity analysis
-#### Mariana Garcia
+#### Mariana García Criado
 #### November 2019
 
 
 ## LIBRARIES ----
-#.libPaths("C:/R_library")
 library(dplyr)
 library(broom)
 library(tidyverse)
 library(MCMCglmm)
 library(ggpubr)
+
 
 ## THEME -----
 clima.theme <- theme(legend.position = "right", legend.title = element_blank(), 
@@ -26,8 +26,8 @@ clima.theme <- theme(legend.position = "right", legend.title = element_blank(),
                      plot.margin = unit(c(1,1,1,1), units = , "cm"))
 
 
-## ORGANISE AND CLEAN DATA ----
-clima.fit <- read.csv("scripts/users/mgarciacriado/encroachment_paper/mastersheets/clima_fit.csv")
+## DATA PREP ----
+clima.fit <- read.csv("mastersheets/clima_fit.csv")
 
 # Add Site.ID to the mastersheet (this function is amazing)
 clima.fit.id2 <- transform(clima.fit, Site.ID = as.numeric(interaction(Latitude, Longitude, drop = TRUE)))
@@ -74,7 +74,6 @@ start.end.dif$End_cover.x <- as.numeric(start.end.dif$End_cover.x)
 start.end.dif$Start_cover.x <- as.character(start.end.dif$Start_cover.x)
 start.end.dif$Start_cover.x <- as.numeric(start.end.dif$Start_cover.x)
 
-
 # Filter per climatic variable
 mat.magnitude <- filter(start.end.dif, variable == "mat")
 map.magnitude <- filter(start.end.dif, variable == "map")
@@ -87,7 +86,10 @@ map.tun.mag <- filter(map.magnitude, Biome_type.x == "Tundra")
 map.sav.mag <- filter(map.magnitude, Biome_type.x == "Savanna")
 
 
-#### TUNDRA TEMPERATURE MODEL ----
+
+## TEMPERATURE INCREASES ----
+
+# Tundra model
 mat.tun.inc.mag <- filter(mat.tun.mag, climdif > 0)
 
 mat.tun.mag.mod <- MCMCglmm(Total_cover_change.x ~ climdif, random = ~us(1):geo.coords.x, 
@@ -98,10 +100,10 @@ summary(mat.tun.mag.mod)
 plot(mat.tun.mag.mod$Sol, auto.layout = F)
 plot(mat.tun.mag.mod$VCV)
 autocorr.plot(mat.tun.mag.mod$VCV)
-save(mat.tun.mag.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/mat_tun_mag_mod.RData")
+save(mat.tun.mag.mod, file = "models/random/mat_tun_mag_mod.RData")
 
 
-#### SAVANNA TEMPERATURE MODEL ----
+# Savanna model
 mat.sav.inc.mag <- filter(mat.sav.mag, climdif > 0)
 
 mat.sav.mag.mod <- MCMCglmm(Total_cover_change.x ~ climdif, random = ~us(1):geo.coords.x, 
@@ -112,11 +114,10 @@ summary(mat.sav.mag.mod)
 plot(mat.sav.mag.mod$Sol, auto.layout = F)
 plot(mat.sav.mag.mod$VCV)
 autocorr.plot(mat.sav.mag.mod$VCV)
-save(mat.sav.mag.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/mat_sav_mag_mod.RData")
+save(mat.sav.mag.mod, file = "models/random/mat_sav_mag_mod.RData")
 
 
-
-## TEMPERATURE PLOT ----
+# Temperature plot
 (mat.mag.plot <- ggplot(mat.magnitude, x = climdif, y = End_cover.x) + 
    geom_segment(mapping = aes(x = climbaseline, y = Start_cover.x, xend = climdif, yend = End_cover.x, group = factor(Plot.ID), 
                               color=Biome_trend.x), size = 1.5, alpha = 0.6, data = mat.magnitude) + geom_vline(xintercept = 0) +
@@ -129,8 +130,9 @@ save(mat.sav.mag.mod, file = "scripts/users/mgarciacriado/encroachment_paper/fin
 
 
 
+#### PRECIPITATION INCREASES ----
 
-#### TUNDRA PRECIPITATION MODEL ----
+# Tundra model
 map.tun.inc.mag <- filter(map.tun.mag, climdif > 0)
 
 map.tun.mag.mod <- MCMCglmm(Total_cover_change.x ~ climdif, random = ~us(1):geo.coords.x, 
@@ -141,10 +143,10 @@ summary(map.tun.mag.mod)
 plot(map.tun.mag.mod$Sol, auto.layout = F)
 plot(map.tun.mag.mod$VCV)
 autocorr.plot(map.tun.mag.mod$VCV)
-save(map.tun.mag.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/map_tun_mag_mod.RData")
+save(map.tun.mag.mod, file = "models/random/map_tun_mag_mod.RData")
 
 
-#### SAVANNA PRECIPITATION MODEL ----
+# Savanna model 
 map.sav.inc.mag <- filter(map.sav.mag, climdif > 0)
 
 map.sav.mag.mod <- MCMCglmm(Total_cover_change.x ~ climdif, random = ~us(1):geo.coords.x, 
@@ -155,10 +157,10 @@ summary(map.sav.mag.mod)
 plot(map.sav.mag.mod$Sol, auto.layout = F)
 plot(map.sav.mag.mod$VCV)
 autocorr.plot(map.sav.mag.mod$VCV)
-save(map.sav.mag.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/map_sav_mag_mod.RData")
+save(map.sav.mag.mod, file = "models/random/map_sav_mag_mod.RData")
 
 
-## PRECIPITATION PLOT ----
+# Precipitation plot
 (map.mag.plot <- ggplot(map.magnitude, x = climdif, y = End_cover.x) + 
     geom_segment(mapping = aes(x = climbaseline, y = Start_cover.x, xend = climdif, yend = End_cover.x, group = factor(Plot.ID), 
                                color=Biome_trend.y), size = 1.5, alpha = 0.6, data = map.magnitude) +
@@ -171,28 +173,9 @@ save(map.sav.mag.mod, file = "scripts/users/mgarciacriado/encroachment_paper/fin
     theme(legend.key = element_blank()) + clima.theme)
 
 
-## PANEL STACK (Figure S4) ----
+## FIGURE 4 ----
 (mag.panel <- ggarrange(mat.mag.plot, map.mag.plot, labels = c("(a)", "(b)"), ncol = 1, nrow = 2,
                          font.label = list(size = 26), common.legend = TRUE, legend = "right"))
-ggsave(mag.panel, filename = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/figures/Figure_S4_new.png", 
+ggsave(mag.panel, filename = "figures/Figure_4.png", 
        width = 40, height = 70, units = "cm")
-
-
-## Create summary table for thsee models only ----
-dataListMag <- list(mat.tun.mag.mod, mat.sav.mag.mod, 
-                 map.tun.mag.mod, map.sav.mag.mod)
-
-# Create lists of input model names
-dataListNamesMag <- list("Magnitude vs magnitude MAT Tundra", "Magnitude vs magnitude MAT Savanna",
-                      "Magnitude vs magnitude MAP Tundra", "Magnitude vs magnitude MAP Savanna")
-
-# Get model outputs and add model names
-readyListMag <- mapply(cbind, lapply(dataListMag, clean.MCMC), "modelName" = dataListNamesMag, SIMPLIFY = F)
-
-# Turn list of dataframes into a dataframe
-mcmc.outputs.mag <- as.data.frame(do.call(rbind, readyListMag), stringsAsFactors = FALSE)
-
-# Convert to html
-stargazer(mcmc.outputs.mag, title = "Magnitude vs magnitude models", type = "html", summary = FALSE, 
-          out = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/figures/magnitude_mods.htm")
 

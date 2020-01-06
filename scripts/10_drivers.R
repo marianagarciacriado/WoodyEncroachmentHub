@@ -3,7 +3,7 @@
 #### Mariana García Criado
 #### October 2018
 
-## PACKAGES ----
+## LIBRARIES ----
 library(ggplot2)
 library(dplyr)
 

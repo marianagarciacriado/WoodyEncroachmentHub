@@ -10,7 +10,7 @@ library(MCMCglmm)
 library(cowplot)
 
 
-#### CLIMATIC SPACE WITH CHANGE OVER TIME PLOT ----
+## CLIMATIC SPACE WITH CHANGE OVER TIME PLOT ----
 clim.sst.cs <- read.csv("mastersheets/clima_fit_sst.csv")
 
 # filter MAT and MAP timeseries
