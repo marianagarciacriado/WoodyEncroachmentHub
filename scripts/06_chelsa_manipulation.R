@@ -303,16 +303,16 @@ write.csv(master_map_min, "data/master_map_min.csv")
 
 
 ## DATAFRAME COMBINATION ----
-master_map <- read.csv("data/master_map.csv")
-master_mat <- read.csv("data/master_mat.csv")
-master_mat_janfeb <- read.csv("data/master_mat_janfeb.csv")
-master_mat_junjul <- read.csv("data/master_mat_junjul.csv")
-master_map_janfeb <- read.csv("data/master_map_janfeb.csv")
-master_map_junjul <- read.csv("data/master_map_junjul.csv")
-master_mat_min <- read.csv("data/master_mat_min.csv")
-master_mat_max <- read.csv("data/master_mat_max.csv")
-master_map_max <- read.csv("data/master_map_max.csv")
-master_map_min <- read.csv("data/master_map_min.csv")
+master_map <- read.csv("mastersheets/master_map.csv")
+master_mat <- read.csv("mastersheets/master_mat.csv")
+master_mat_janfeb <- read.csv("mastersheets/master_mat_janfeb.csv")
+master_mat_junjul <- read.csv("mastersheets/master_mat_junjul.csv")
+master_map_janfeb <- read.csv("mastersheets/master_map_janfeb.csv")
+master_map_junjul <- read.csv("mastersheets/master_map_junjul.csv")
+master_mat_min <- read.csv("mastersheets/master_mat_min.csv")
+master_mat_max <- read.csv("mastersheets/master_mat_max.csv")
+master_map_max <- read.csv("mastersheets/master_map_max.csv")
+master_map_min <- read.csv("mastersheets/master_map_min.csv")
 
 master_clima <- rbind(master_map, master_mat, master_mat_janfeb, master_mat_junjul, master_map_janfeb, 
                       master_map_junjul, master_mat_min, master_mat_max, master_map_max, master_map_min)
@@ -323,24 +323,22 @@ master_clima <- rbind(master_map, master_mat, master_mat_janfeb, master_mat_junj
 mastersheet.seq <- mastersheet %>% group_by(Plot.ID) %>% 
   mutate(year.b4 = min(Start_year) - 4) %>% mutate(year = list(seq(year.b4, End_year))) %>% unnest()
 
-write.csv(mastersheet.seq, "mastersheets/mastersheet_seq.csv")
+# write.csv(mastersheet.seq, "mastersheets/mastersheet_seq.csv")
+# this is a very large file so it is not pushed to GitHub
 
 # merge mastersheet.seq with master_clima
 clima.fit <- merge(mastersheet.seq, master_clima, by = c("Longitude", "Latitude", "year"))
-write.csv(clima.fit, "mastersheets/clima_fit.csv")
+# write.csv(clima.fit, "mastersheets/clima_fit.csv")
+# also a very large file so not pushed to GitHub either
 
 
 ## Extracting slopes (annual change in climatic variables) for each record 
-clima.fit <- read.csv("mastersheets/clima_fit.csv")
-
 sst.fit.slopes <- clima.fit %>%
   group_by(., variable, Plot.ID) %>%
   do(mod = lm(value ~ year, data = .)) %>%
   tidy(mod) %>%
   filter(term == "year") %>%
   dplyr::select(variable, Plot.ID, estimate)
-
-write.csv(sst.fit.slopes, "mastersheets/sst_fit_slopes.csv")
 
 # Merge the slopes with the vegetation/trend data in one final object
 clima.fit.sst <- clima.fit %>% dplyr::select(Biome_type, Plot.ID, Latitude, Longitude, tempc, precip, 
