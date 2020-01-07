@@ -295,7 +295,7 @@ plot(map.min.y9.sav.mod$Sol)
 plot(map.min.y9.sav.mod$VCV)
 autocorr.plot(map.min.y9.sav.mod$VCV)
 hist(mcmc(map.min.y9.sav.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(map.min.y9.sav.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/map.min.y9.sav.mod.RData")
+save(map.min.y9.sav.mod, file = "models/random/map.min.y9.sav.mod.RData")
 
 
 
@@ -501,12 +501,7 @@ mcmc.Outputs.all2 <- transform(mcmcOutputs.all, ModelNumber = as.numeric(interac
 # Reorder columns
 mcmc.Outputs.all.clean <- mcmc.Outputs.all2[, c(9, 8, 1, 7, 2, 3, 4, 5, 6)]
 
-# Write csv
-write.csv(mcmc.Outputs.all.clean, file = "models/TableS3.csv")
-
 # Create nice summary table in html format
 stargazer(mcmc.Outputs.all.clean, title = "Woody cover change rates vs. climatic change rates", type = "html", summary = FALSE, 
           out = "models/Table_S3.htm")
-
-
 

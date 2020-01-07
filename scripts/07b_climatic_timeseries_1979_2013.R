@@ -104,7 +104,7 @@ plot(mat.junjul.y.sav.mod$Sol)
 plot(mat.junjul.y.sav.mod$VCV)
 autocorr.plot(mat.junjul.y.sav.mod$VCV)
 hist(mcmc(mat.junjul.y.sav.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(mat.junjul.y.sav.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/mat.junjul.y.sav.mod.RData")
+save(mat.junjul.y.sav.mod, file = "models/random/mat.junjul.y.sav.mod.RData")
 
 
 
@@ -132,7 +132,7 @@ plot(mat.janfeb.y.sav.mod$Sol)
 plot(mat.janfeb.y.sav.mod$VCV)
 autocorr.plot(mat.janfeb.y.sav.mod$VCV)
 hist(mcmc(mat.janfeb.y.sav.mod$VCV)[,"(Intercept):(Intercept).geo.coords"])
-save(mat.janfeb.y.sav.mod, file = "scripts/users/mgarciacriado/encroachment_paper/final_scripts/models/random/mat.janfeb.y.sav.mod.RData")
+save(mat.janfeb.y.sav.mod, file = "models/random/mat.janfeb.y.sav.mod.RData")
 
 
 

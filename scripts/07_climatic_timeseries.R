@@ -795,13 +795,6 @@ readyList <- mapply(cbind, lapply(dataList, clean.MCMC), "modelName" = dataListN
 # Turn list of dataframes into a dataframe
 mcmcOutputs <- as.data.frame(do.call(rbind, readyList), stringsAsFactors = FALSE)
 
-# Write csv
-write.csv(mcmcOutputs, file = "models/rate_mods_random.csv")
-
-# Create nice summary table in html format
-stargazer(mcmcOutputs, title = "Model results (random effects)", type = "html", summary = FALSE, 
-          out = "models/rate_mods_random.htm")
-
 # Prepare data for plotting
 mcmcOutputs.estimate <- mcmcOutputs %>% filter(variable == "estimate")
 mcmcOutputs.estimate$Biome[mcmcOutputs.estimate$modelName %in% c("MAP Jan-Feb Savanna", "MAP Jun-Jul Savanna", "MAP Max Savanna", "MAP Min Savanna", "MAP Savanna", 
