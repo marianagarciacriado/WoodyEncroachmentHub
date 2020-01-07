@@ -9,14 +9,8 @@ library(broom)
 library(MCMCglmm)
 library(stargazer)
 
-## NB. All models below have been created in scripts 1-12. However not all models are pushed on the GitHub repo because of their large
-## size. These models are the following: map_sav_dw, mat_tun_dw, sens_map_sav, sens_mat_sav. In any case it is not necessary for the 
-## creation of the table to have them in the repo since they can be loaded as objects from the environment if they have been previously
-## created within the same R session.
-
-## NB2. Something's up with the magnitude vs magnitude models, which don't appear correctly in this model table when I updated them.
-## I have fitted them separately in a table in script 11.
-
+## NB2. Something's up with the magnitude vs magnitude models, which don't appear correctly 
+## in this model table when I updated them. I have fitted them separately in a table in script 11.
 
 ## FUNCTIONS ----
 

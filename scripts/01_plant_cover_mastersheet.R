@@ -11,9 +11,9 @@ library(tidyverse)
 ## MASTERSHEET CREATION ----
 
 ## Loading biome-specific mastersheets with the compiled data
-tun.ms <- read.csv("mastersheets/Supershinynewtundramastersheet.csv")
-itex.ms <- read.csv("mastersheets/itex_shrubs_v2_with_references.csv")
-sav.ms <- read.csv("mastersheets/Supershinynewsavannamastersheet.csv")
+tun.ms <- read.csv("mastersheets/tundra_mastersheet.csv")
+itex.ms <- read.csv("mastersheets/itex_mastersheet.csv")
+sav.ms <- read.csv("mastersheets/savanna_mastersheet.csv")
 
 
 ## Merging tundra mastersheets (tundra data from the literature + ITEX data)
