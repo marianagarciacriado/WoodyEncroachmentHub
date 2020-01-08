@@ -25,7 +25,7 @@ All data for our analyses can be found in the `mastersheets` folder.
 
 ## Scripts
 All the analyses undertaken for this manuscript are split between multiple R scripts within the `scripts`folder.
-They can be followed in a sequential order (i.e., 01 to 12), but I recommend not to run scripts #5 and most of script #6 (until line 321) as they deal with the extraction and manipulation of raster data from CHELSA (http://chelsa-climate.org/). Both the climatologies and time series are large files and are thus stored in a hard drive so it is not possible to run the scripts without access to the climatic raster files.
+They can be followed in a sequential order (i.e., 01 to 12), but I recommend not to run scripts #5 and #6 as they deal with the extraction and manipulation of raster data from CHELSA (http://chelsa-climate.org/). Both the climatologies and time series are large files and are thus stored in a hard drive so it is not possible to run the scripts without access to the climatic raster files.
 
 ## Figures
 The figures generated in R are stored in the `figures` folder.
