@@ -13,7 +13,7 @@ library(readr)
 library(dplyr)
 library(broom)
 
-## NB. This script can be skipped (until line 321) when running all scripts sequentially, since it requires access to the downloaded
+## NB. This script can be skipped when running all scripts sequentially, since it requires access to the downloaded
 ## climatologies and time series raster files from CHELSA which are not stored online due to their large sizes.
 ## The original climate data can be downloaded directly from the CHELSA website (http://chelsa-climate.org/)
 
@@ -320,8 +320,8 @@ master_clima <- rbind(master_map, master_mat, master_mat_janfeb, master_mat_junj
 
 ## Site-Specific Timeseries (SST) dataframe
 # adding 4 years prior the start date to account for time lags
-mastersheet.seq <- mastersheet %>% group_by(Plot.ID) %>% 
-  mutate(year.b4 = min(Start_year) - 4) %>% mutate(year = list(seq(year.b4, End_year))) %>% unnest()
+mastersheet.seq <- cover.ms.clim %>% group_by(Plot.ID) %>% 
+  mutate(year.b4 = min(Start_year) - 4) %>% mutate(year = list(seq(year.b4, End_year))) %>% tidyr::unnest()
 
 # write.csv(mastersheet.seq, "mastersheets/mastersheet_seq.csv")
 # this is a very large file so it is not pushed to GitHub
@@ -339,6 +339,8 @@ sst.fit.slopes <- clima.fit %>%
   tidy(mod) %>%
   filter(term == "year") %>%
   dplyr::select(variable, Plot.ID, estimate)
+
+write.csv(sst.fit.slopes, "mastersheets/sst_fit_slopes.csv")
 
 # Merge the slopes with the vegetation/trend data in one final object
 clima.fit.sst <- clima.fit %>% dplyr::select(Biome_type, Plot.ID, Latitude, Longitude, tempc, precip, 

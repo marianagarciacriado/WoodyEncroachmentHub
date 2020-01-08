@@ -150,7 +150,7 @@ mat.junjul.tundra <- filter(mat_junjul, Biome_type == "Tundra")
 mat.junjul.tun.mod <- MCMCglmm(Annual.rate ~ estimate, random = ~us(1):geo.coords, 
                            data = mat.junjul.tundra, prior = prior6, nitt = 200000, burnin = 30000, thin = 50, pr=TRUE)
 
-summary(mat.junjul.tun.mod) #negative non-significant
+summary(mat.junjul.tun.mod) #positive non-significant
 plot(mat.junjul.tun.mod$Sol, ask = F)
 plot(mat.junjul.tun.mod$VCV)
 autocorr.plot(mat.junjul.tun.mod$VCV)

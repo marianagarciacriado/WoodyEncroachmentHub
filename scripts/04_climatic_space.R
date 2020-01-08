@@ -213,7 +213,9 @@ pred.raw.clim.sav <- cbind(data.frame(predclim.sav), preddata2)
           legend.key = element_blank(), plot.margin = unit(c(1,1,1,1), units = , "cm")))
 
 # MAP vs. cover change
-(clim.map.plot <- ggplot(cover.ms.clim, aes(x=precip, y=Annual.rate, colour=Biome_type)) + 
+cover.ms.clim.o <- arrange(cover.ms.clim, Biome_type)
+
+(clim.map.plot <- ggplot(cover.ms.clim.o, aes(x=precip, y=Annual.rate, colour=Biome_type)) + 
     geom_point(size = 5, alpha = 0.5) + 
     geom_vline(xintercept = 0) + geom_hline(yintercept = 0) + 
     ylab("Cover change rate (% per year)\n") + xlab("\nMean Annual Precipitation (mm)") + labs(color = "Biome") +
@@ -252,6 +254,6 @@ sav.clim$low_high[sav.clim$precip > 650] <- "high"
 
 sav.rainfall <- MCMCglmm(Annual.rate ~ low_high, data = sav.clim, 
                           nitt = 100000, burnin = 5000, thin = 30)
-summary(sav.rainfall) #almost significant lower cover change rates in low-rainfall savannas
+summary(sav.rainfall) #marginally higher rates of cover change in high-rainfall savannas
 save(sav.rainfall, file = "models/fixed/sav.rainfall.RData")
 

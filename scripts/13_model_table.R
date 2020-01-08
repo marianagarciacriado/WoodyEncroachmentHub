@@ -9,8 +9,8 @@ library(broom)
 library(MCMCglmm)
 library(stargazer)
 
-## NB2. Something's up with the magnitude vs magnitude models, which don't appear correctly 
-## in this model table when I updated them. I have fitted them separately in a table in script 11.
+## NB. Sometimes the magnitude vs magnitude models don't appear correctly in this model table,
+## so I have fitted them separately in a table in script 11, in case that happens again.
 
 ## FUNCTIONS ----
 

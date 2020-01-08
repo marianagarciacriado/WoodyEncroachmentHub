@@ -236,7 +236,7 @@ save(dec.means.mod, file = "models/fixed/dec.means.mod.RData")
 # Differences in overall cover trends between biomes
 overall.mod <- MCMCglmm(Annual.rate ~ Biome_type, data = cover.msc, 
                     nitt = 100000, burnin = 5000, thin = 30)
-summary(overall.mod) # significantly different overall values
+summary(overall.mod) # not significantly different overall values
 save(overall.mod, file = "models/fixed/overall.mod.RData")
 
 

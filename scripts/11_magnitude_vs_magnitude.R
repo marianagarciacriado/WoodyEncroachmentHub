@@ -53,17 +53,17 @@ start.clim.mean <- start.clim %>% group_by(Site.ID, variable) %>% mutate(start.m
 end.clim.mean <- end.clim %>% group_by(Site.ID, variable) %>% mutate(end.mean = mean(value))
 
 # Simplify databases
-start.simple <- start.clim.mean %>% select(Biome_type, Start_year, End_year, Start_cover, End_cover, Total_cover_change, 
+start.simple <- start.clim.mean %>% dplyr::select(Biome_type, Start_year, End_year, Start_cover, End_cover, Total_cover_change, 
                                            Plot.ID, year.b4, variable, Site.ID, start.mean, geo.coords, Biome_trend)
 
-end.simple <- end.clim.mean %>% select(Biome_type, Start_year, End_year, Start_cover, End_cover, Total_cover_change, 
+end.simple <- end.clim.mean %>% dplyr::select(Biome_type, Start_year, End_year, Start_cover, End_cover, Total_cover_change, 
                                            Plot.ID, year.b4, variable, Site.ID, end.mean, geo.coords, Biome_trend)
 
 # Join start and end databases and filter to those within the 1979 - 2013 time window
 start.end.clim <- left_join(start.simple, end.simple, by = c("Plot.ID", "variable")) %>% 
   distinct() %>% filter(year.b4.x >= 1979) 
 
-# Calculate climatic differences, retain increases only and remove NAs 
+# Calculate climatic differences and remove NAs 
 start.end.dif <- start.end.clim %>% mutate(climbaseline = 0) %>% 
   mutate(climdif = end.mean - start.mean) %>% drop_na(Start_cover.x, End_cover.x, start.mean, end.mean) %>% 
   filter(Start_cover.x !="not reported" | Start_cover.x !="not recorded" | Start_cover.x !="")
@@ -196,4 +196,4 @@ mcmc.outputs.mag <- as.data.frame(do.call(rbind, readyListMag), stringsAsFactors
 
 # Convert to html
 stargazer(mcmc.outputs.mag, title = "Magnitude vs magnitude models", type = "html", summary = FALSE, 
-          out = "figures/magnitude_mods.htm")
+          out = "models/magnitude_mods.htm")
