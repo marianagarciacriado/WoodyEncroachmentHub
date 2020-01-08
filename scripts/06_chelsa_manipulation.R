@@ -13,7 +13,7 @@ library(readr)
 library(dplyr)
 library(broom)
 
-## NB. This script can be skipped (until line 333) when running all scripts sequentially, since it requires access to the downloaded
+## NB. This script can be skipped (until line 321) when running all scripts sequentially, since it requires access to the downloaded
 ## climatologies and time series raster files from CHELSA which are not stored online due to their large sizes.
 ## The original climate data can be downloaded directly from the CHELSA website (http://chelsa-climate.org/)
 
