@@ -9,10 +9,10 @@ Mariana García Criado, Isla H. Myers-Smith, Anne D. Bjorkman, Caroline E.R. Leh
 Contact: Mariana García Criado, mariana.garcia.criado@gmail.com
 
 ## Data use guidelines
-Data are publicly available using a Creative Commons Attribution 4.0 International copyright (CC BY 4.0; see license.txt). Data are fully public but should be appropriately referenced by citing the paper. Although not mandatory, we additionally suggest that data users contact and collaborate with data contributors if this dataset will contribute a substantial proportion of observations used in a particular paper or analysis.
+Data are publicly available using a Creative Commons Attribution 4.0 International copyright (CC BY 4.0; see license.txt). Data are fully public but should be appropriately referenced by citing the paper. Although not mandatory, we additionally suggest that data users contact and collaborate with data contributors if this dataset will contribute a substantial proportion of observations used in a particular paper or analysis. DOI for this dataset is 10.5281/zenodo.3601454
 
 ## Data availability & access
-The data and code for this manuscript will be mantained at this GitHub repository (https://github.com/marianagarciacriado/WoodyEncroachmentHub)
+The data and code for this manuscript will be mantained at this GitHub repository (https://github.com/marianagarciacriado/WoodyEncroachmentHub). 
 
 ## Citation
 García Criado, M., Myers-Smith, I.H., Bjorkman, A.D., Lehmann, C.E.R. and Stevens, N. 2020. Woody plant encroachment intensifies under climate change across tundra and savanna biomes. Global Ecology and Biogeography. In press.
