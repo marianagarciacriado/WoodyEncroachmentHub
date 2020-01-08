@@ -15,7 +15,7 @@ tbc, license
 The data and code for this manuscript will be mantained at this GitHub repository (https://github.com/marianagarciacriado/WoodyEncroachmentHub)
 
 ## Citation
-tbc
+García Criado, M., Myers-Smith, I.H., Bjorkman, A.D., Lehmann, C.E.R. and Stevens, N. 2020. Woody plant encroachment intensifies under climate change across tundra and savanna biomes. Global Ecology and Biogeography. In press.
 
 ## Acknowledgments from the manuscript
 M.G.C. was supported by the Principal Career’s Development PhD Scholarship from The University of Edinburgh. I.M.S. was supported by the NERC Shrub Tundra grant (NE/M016323/1). We thank all tundra and savanna data collectors, including members of the International Tundra Experiment Network (ITEX), for their efforts in data collection and for making their data accessible. We are grateful to Jakob Assmann for his assistance in extracting and manipulating the CHELSA climatic data. We thank local and indigenous peoples of the tundra and savanna biomes for the opportunity to work with data collected on their lands.
